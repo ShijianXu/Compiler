@@ -127,6 +127,7 @@ extern FILE* yyin;
 int main(int argc, char** argv)
 {   
 	if (argc <= 1) return 1;
+	
 	FILE* f = fopen(argv[1], "r");
 	if (!f)
 	{
@@ -141,5 +142,5 @@ int main(int argc, char** argv)
 }
 int yyerror(char* msg)
 {       
-	fprintf(stderr, "error: %s\n", msg);
+	fprintf(stderr, "error line %d: %s\n",yylloc.first_line, msg);
 }
