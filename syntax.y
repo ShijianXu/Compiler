@@ -1,8 +1,9 @@
 %{
 	#include <stdio.h>
-	#include "lex.yy.c"
+	int yylex();
+	int yyerror(char *msg);
 %}
-
+%locations
 /* declared tokens */
 %token INT
 %token FLOAT
@@ -123,13 +124,22 @@ Args : Exp COMMA Args
 #include "lex.yy.c"
 
 extern FILE* yyin;
-int main()
-{       
+int main(int argc, char** argv)
+{   
+	if (argc <= 1) return 1;
+	FILE* f = fopen(argv[1], "r");
+	if (!f)
+	{
+		perror(argv[1]);
+		return 1;
+	}
+	yyin = f;
+	yyrestart(f);
 	do{
 		yyparse();
 	}while(!feof(yyin));
 }
-yyerror(char* msg)
+int yyerror(char* msg)
 {       
 	fprintf(stderr, "error: %s\n", msg);
 }

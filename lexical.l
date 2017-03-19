@@ -1,9 +1,15 @@
 %{
 	#include "syntax.tab.h"
+	int yycolumn = 1;
+	#define YY_USER_ACTION \
+	yylloc.first_line = yylloc.last_line = yylineno; \
+	yylloc.first_column = yycolumn; \
+	yylloc.last_column = yycolumn + yyleng - 1; \
+	yycolumn += yyleng;
 %}
 
 %option yylineno
-delim [ \t\n]
+delim [ \t]
 ws {delim}+
 letter [_a-zA-Z]
 digit [0-9]
@@ -16,6 +22,7 @@ float ({digit}+\.{digit}+)|({digit}*\.{digit}*[Ee][+-]?{digit}+)
 %%
 
 {ws} {/*no action and no return*/}
+\n { yycolumn = 1 ;}
 struct { printf("STRUCT\n"); return STRUCT; }
 return { printf("RETURN\n"); return RETURN; }
 if { printf("IF\n"); return IF; }
