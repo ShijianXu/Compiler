@@ -120,10 +120,14 @@ Args : Exp COMMA Args
 	;
 
 %%
-#inlucde "lex.yy.c"
+#include "lex.yy.c"
+
+extern FILE* yyin;
 int main()
 {       
-	yyparse();
+	do{
+		yyparse();
+	}while(!feof(yyin));
 }
 yyerror(char* msg)
 {       

@@ -1,5 +1,5 @@
 %{
-	#include "syntx.tab.h"
+	#include "syntax.tab.h"
 %}
 
 %option yylineno
@@ -61,7 +61,7 @@ for { printf("FOR\n"); }
 
 %%
 
-int main(int argc, char** argv)
+/*int main(int argc, char** argv)
 {
 	if (argc>1)
 	{
@@ -76,4 +76,4 @@ int main(int argc, char** argv)
 	yyrestart(f);
 	yyparse();
 	return 0;
-}
+}*/
