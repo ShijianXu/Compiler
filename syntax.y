@@ -137,6 +137,7 @@ int main(int argc, char** argv)
 	yyin = f;
 	yyrestart(f);
 	do{
+		/*yydebug = 1;*/
 		yyparse();
 	}while(!feof(yyin));
 }

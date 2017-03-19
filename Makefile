@@ -7,7 +7,7 @@ parser: syntax.tab.c
 	$(CC) -o parser syntax.tab.c -lfl -ly
 
 syntax.tab.c: syntax.y lex.yy.c
-	$(BISON) -d -v syntax.y
+	$(BISON) -d -t -v syntax.y
 
 lex.yy.c: lexical.l
 	$(FLEX) lexical.l
