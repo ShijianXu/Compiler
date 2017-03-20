@@ -33,6 +33,14 @@
 %token ELSE
 %token WHILE
 
+%right ASSIGNOP
+%left OR
+%left AND
+%left RELOP
+%left PLUS MINUS
+%left STAR DIV
+%right NOT
+%left LP RP LB RB DOT
 %%
 /* High-level Definitions */
 Program : ExtDefList
