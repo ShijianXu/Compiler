@@ -1,7 +1,16 @@
 %{
 	#include <stdio.h>
+	#include <stdlib.h>
 	int yylex();
 	int yyerror(char *msg);
+	typedef struct node
+	{
+		char *data;
+		struct node *first_child, *next_sibling;
+	}tree;
+
+	tree *insertTree(char *ch, tree *parent, tree *pre_sibling);
+	tree *create();
 %}
 %locations
 /* declared tokens */
@@ -156,4 +165,25 @@ int main(int argc, char** argv)
 int yyerror(char* msg)
 {       
 	fprintf(stderr, "error line,column %d, %d: %s\n",yylloc.first_line, yylloc.first_column,msg);
+}
+
+tree *insert(char *ch, tree *parent, tree *pre_sibling)
+{
+	tree *child = (tree *)malloc(sizeof(tree));
+	child->data = ch;
+	if(parent != NULL)
+		parent->first_child = child;
+	if(pre_sibling != NULL)
+		pre_sibling->next_sibling = child;
+
+	child->first_child = NULL;
+	child->next_sibling = NULL;
+
+	return child;
+}
+
+tree *create()
+{
+	tree *root = (tree *)malloc(sizeof(tree));
+	return root;
 }
