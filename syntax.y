@@ -122,6 +122,7 @@ Exp : Exp ASSIGNOP Exp
 	| ID LP Args RP
 	| ID LP RP
 	| Exp LB Exp RB
+	| Exp LB error RB
 	| Exp DOT ID
 	| ID
 	| INT
@@ -154,5 +155,5 @@ int main(int argc, char** argv)
 }
 int yyerror(char* msg)
 {       
-	fprintf(stderr, "error line %d: %s\n",yylloc.first_line, msg);
+	fprintf(stderr, "error line,column %d, %d: %s\n",yylloc.first_line, yylloc.first_column,msg);
 }
