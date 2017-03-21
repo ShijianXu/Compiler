@@ -13,9 +13,16 @@
 	tree *create();
 %}
 %locations
+/* delcared types */
+%union {
+	node* nd;
+	int type_int;
+	float type_float;
+	double type_double;
+}
 /* declared tokens */
-%token INT
-%token FLOAT
+%token <type_int> INT
+%token <type_float> FLOAT
 %token ID
 %token SEMI
 %token COMMA
@@ -41,6 +48,9 @@
 %token IF
 %token ELSE
 %token WHILE
+
+%type <nd> Program ExtDefList ExtDef ExtDecList Specifier StructSpecifier OptTag Tag VarDec FunDec VarList ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
+
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
