@@ -1,28 +1,21 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
+	#include "tree.h"
 	int yylex();
 	int yyerror(char *msg);
-	typedef struct node
-	{
-		char *data;
-		struct node *first_child, *next_sibling;
-	}tree;
-
-	tree *insertTree(char *ch, tree *parent, tree *pre_sibling);
-	tree *create();
 %}
 %locations
 /* delcared types */
 %union {
-	node* nd;
+	tree *nd;
 	int type_int;
 	float type_float;
 	double type_double;
 }
 /* declared tokens */
-%token <type_int> INT
-%token <type_float> FLOAT
+%token INT
+%token FLOAT
 %token ID
 %token SEMI
 %token COMMA
@@ -48,8 +41,6 @@
 %token IF
 %token ELSE
 %token WHILE
-
-%type <nd> Program ExtDefList ExtDef ExtDecList Specifier StructSpecifier OptTag Tag VarDec FunDec VarList ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
 
 
 %nonassoc LOWER_THAN_ELSE
@@ -157,6 +148,7 @@ Args : Exp COMMA Args
 extern FILE* yyin;
 int main(int argc, char** argv)
 {   
+	tree *root = create("a");
 	if (argc <= 1) return 1;
 	
 	FILE* f = fopen(argv[1], "r");
@@ -175,25 +167,4 @@ int main(int argc, char** argv)
 int yyerror(char* msg)
 {       
 	fprintf(stderr, "error line,column %d, %d: %s\n",yylloc.first_line, yylloc.first_column,msg);
-}
-
-tree *insert(char *ch, tree *parent, tree *pre_sibling)
-{
-	tree *child = (tree *)malloc(sizeof(tree));
-	child->data = ch;
-	if(parent != NULL)
-		parent->first_child = child;
-	if(pre_sibling != NULL)
-		pre_sibling->next_sibling = child;
-
-	child->first_child = NULL;
-	child->next_sibling = NULL;
-
-	return child;
-}
-
-tree *create()
-{
-	tree *root = (tree *)malloc(sizeof(tree));
-	return root;
 }

@@ -3,8 +3,8 @@ FLEX = flex
 BISON = bison
 CFLAGS = -std=c99
 
-parser: syntax.tab.c
-	$(CC) -o parser syntax.tab.c -lfl -ly
+parser: syntax.tab.c tree.c
+	$(CC) -o parser tree.c syntax.tab.c -lfl -ly
 
 syntax.tab.c: syntax.y lex.yy.c
 	$(BISON) -d -t -v syntax.y
