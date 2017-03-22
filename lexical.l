@@ -23,34 +23,33 @@ float ({digit}+\.{digit}+)|({digit}*\.{digit}*[Ee][+-]?{digit}+)
 
 {ws} {/*no action and no return*/}
 \n { yycolumn = 1 ;}
-struct { printf("STRUCT\n"); return STRUCT; }
-return { printf("RETURN\n"); return RETURN; }
-if { printf("IF\n"); return IF; }
-else { printf("ELSE\n"); return ELSE; }
-while { printf("WHILE\n"); return WHILE; }
-for { printf("FOR\n"); }
-{type} { printf("TYPE:%s\n", yytext); return TYPE; }
-{int} { printf("INT:%s\n", yytext); return INT; }
-{float} { printf("FLOAT:%s\n", yytext); return FLOAT; }
-{id} { printf("ID:%s\n", yytext); return ID; }
-";" { printf("SEMI\n"); return SEMI; }
-"," { printf("COMMA\n"); return COMMA; }
-"=" { printf("ASSIGN\n"); return ASSIGNOP; }
-">"|"<"|">="|"<="|"=="|"!=" { printf("RELOP\n"); return RELOP; }
-"+" { printf("PLUS\n"); return PLUS; }
-"-" { printf("SUB\n"); return MINUS; }
-"*" { printf("MUL\n"); return STAR; }
-"/" { printf("DIV\n"); return DIV; }
-"&&" { printf("AND\n"); return AND; }
-"||" { printf("OR\n"); return OR; }
-"." { printf("DOT\n"); return DOT; }
-"!" { printf("NOT\n"); return NOT; }
-"(" { printf("LP\n"); return LP; }
-")" { printf("RP\n"); return RP; }
-"[" { printf("LB\n"); return LB; }
-"]" { printf("RB\n"); return RB; }
-"{" { printf("LC\n"); return LC; }
-"}" { printf("RC\n"); return RC; }
+struct { return STRUCT; }
+return { return RETURN; }
+if { return IF; }
+else { return ELSE; }
+while { return WHILE; }
+{type} { return TYPE; }
+{int} { return INT; }
+{float} { return FLOAT; }
+{id} { return ID; }
+";" { return SEMI; }
+"," { return COMMA; }
+"=" { return ASSIGNOP; }
+">"|"<"|">="|"<="|"=="|"!=" { return RELOP; }
+"+" { return PLUS; }
+"-" { return MINUS; }
+"*" { return STAR; }
+"/" { return DIV; }
+"&&" { return AND; }
+"||" { return OR; }
+"." { return DOT; }
+"!" { return NOT; }
+"(" { return LP; }
+")" { return RP; }
+"[" { return LB; }
+"]" { return RB; }
+"{" { return LC; }
+"}" { return RC; }
 "//" {char c=input();
 	while (c!='\n') c=input();
 }
