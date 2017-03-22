@@ -17,7 +17,9 @@
 %token <nd> OR DOT NOT TYPE LP RP LB RB LC RC
 %token <nd> STRUCT RETURN IF ELSE WHILE
 
-%type <nd> Program ExtDefList ExtDef ExtDecList Specifier StructSpecifier OptTag Tag VarDec FunDec VarList ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
+%type <nd> Program ExtDefList ExtDef ExtDecList Specifier 
+%type <nd> StructSpecifier OptTag Tag VarDec FunDec VarList 
+%type <nd> ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
 
 %nonassoc LOWER_THAN_ELSE
 %nonassoc ELSE
