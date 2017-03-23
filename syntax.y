@@ -34,90 +34,89 @@
 %left LP RP LB RB DOT
 %%
 /* High-level Definitions */
-Program : ExtDefList {printf("Program\n");}
+Program : ExtDefList {insert("Program", 1);}
 	;
-ExtDefList : ExtDef ExtDefList {printf("ExtDefList\n");}
-	| /* empty */
+ExtDefList : ExtDef ExtDefList {insert("ExtDefList", 2);}
+	| /* empty */ {insert("ExtDefList", 0);}
 	;
-ExtDef : Specifier ExtDecList SEMI {printf("ExtDef\n");}
-	| Specifier SEMI {printf("ExtDef\n");}
-	| Specifier FunDec CompSt {printf("ExtDef\n");}
+ExtDef : Specifier ExtDecList SEMI {insert("ExtDef", 3);}
+	| Specifier SEMI {insert("ExtDef", 2);}
+	| Specifier FunDec CompSt {insert("ExtDef", 3);}
 	;
-ExtDecList : VarDec {printf("ExtDecList\n");}
-	| VarDec COMMA ExtDecList {printf("ExtDecList\n");}
+ExtDecList : VarDec {insert("ExtDecList", 1);}
+	| VarDec COMMA ExtDecList {insert("ExtDecList", 3);}
 	;
 /* Specifiers */
-Specifier : TYPE {printf("Specifier\n");}
-	| StructSpecifier {printf("Specifier\n");}
+Specifier : TYPE {insert("Specifier", 1);}
+	| StructSpecifier {insert("Specifier", 1);}
 	;
-StructSpecifier : STRUCT OptTag LC DefList RC {printf("StructSpecifier\n");}
-	| STRUCT Tag {printf("StructSpecifier\n");}
+StructSpecifier : STRUCT OptTag LC DefList RC {insert("StructSpecifier", 5);}
+	| STRUCT Tag {insert("StructSpecifier", 2);}
 	;
-OptTag : ID {printf("OptTag\n");}
-	| /* empty */
+OptTag : ID {insert("OptTag", 1);}
+	| /* empty */ {insert("OptTag", 0);}
 	;
-Tag : ID {printf("Tag\n");}
+Tag : ID {insert("Tag", 1);}
 	;
 /* Declarators */
-VarDec : ID {printf("VarDec\n");}
-	| VarDec LB INT RB {printf("VarDec\n");}
+VarDec : ID {insert("VarDec", 1);}
+	| VarDec LB INT RB {insert("VarDec", 4);}
 	;
-FunDec : ID LP VarList RP {printf("FunDec\n");}
-	| ID LP RP {printf("FunDec\n");}
+FunDec : ID LP VarList RP {insert("FunDec", 4);}
+	| ID LP RP {insert("FunDec", 3);}
 	;
-VarList : ParamDec COMMA VarList {printf("VarList\n");}
-	| ParamDec {printf("VarList\n");}
+VarList : ParamDec COMMA VarList {insert("VarList", 3);}
+	| ParamDec {insert("VarList", 1);}
 	;
-ParamDec : Specifier VarDec {printf("ParamDec\n");}
+ParamDec : Specifier VarDec {insert("ParamDec", 2);}
 	;
 /* Statements */
-CompSt : LC DefList StmtList RC {printf("CompSt\n");}
+CompSt : LC DefList StmtList RC {insert("CompSt", 4);}
 	;
-StmtList : Stmt StmtList {printf("StmtList\n");}
-	| /* empty */
+StmtList : Stmt StmtList {insert("StmtList", 2);}
+	| /* empty */ {insert("StmtList", 0);}
 	;
-Stmt : Exp SEMI {printf("Stmt\n");}
-	| CompSt {printf("Stmt\n");}
-	| RETURN Exp SEMI {printf("Stmt\n");}
-	| IF LP Exp RP Stmt %prec LOWER_THAN_ELSE {printf("Stmt\n");}
-	| IF LP Exp RP Stmt ELSE Stmt {printf("Stmt\n");}
-	| WHILE LP Exp RP Stmt {printf("Stmt\n");}
+Stmt : Exp SEMI {insert("Stmt", 2);}
+	| CompSt {insert("Stmt", 1);}
+	| RETURN Exp SEMI {insert("Stmt", 3);}
+	| IF LP Exp RP Stmt %prec LOWER_THAN_ELSE {insert("Stmt", 5);}
+	| IF LP Exp RP Stmt ELSE Stmt {insert("Stmt", 7);}
+	| WHILE LP Exp RP Stmt {insert("Stmt", 5);}
 	;
 /* Local Definitions */
-DefList : Def DefList {printf("DefList\n");}
-	| /* empty */
+DefList : Def DefList {insert("DefList", 2);}
+	| /* empty */ {insert("DefList", 0);}
 	;
-Def : Specifier DecList SEMI {printf("Def\n");}
+Def : Specifier DecList SEMI {insert("Def", 3);}
 	;
-DecList : Dec {printf("DecList\n");}
-	| Dec COMMA DecList {printf("DecList\n");}
+DecList : Dec {insert("DecList", 1);}
+	| Dec COMMA DecList {insert("DecList", 3);}
 	;
-Dec : VarDec {printf("Dec\n");}
-	| VarDec ASSIGNOP Exp {printf("Dec\n");}
+Dec : VarDec {insert("Dec", 1);}
+	| VarDec ASSIGNOP Exp {insert("Dec", 3);}
 	;
 /* Expressions */
-Exp : Exp ASSIGNOP Exp {printf("Exp\n");}
-	| Exp AND Exp {printf("Exp\n");}
-	| Exp OR Exp {printf("Exp\n");}
-	| Exp RELOP Exp {printf("Exp\n");}
-	| Exp PLUS Exp {printf("Exp\n");}
-	| Exp MINUS Exp {printf("Exp\n");}
-	| Exp STAR Exp {printf("Exp\n");}
-	| Exp DIV Exp {printf("Exp\n");}
-	| LP Exp RP {printf("Exp\n");}
-	| MINUS Exp {printf("Exp\n");}
-	| NOT Exp {printf("Exp\n");}
-	| ID LP Args RP {printf("Exp\n");}
-	| ID LP RP {printf("Exp\n");}
-	| Exp LB Exp RB {printf("Exp\n");}
-	| Exp LB error RB {printf("Exp\n");}
-	| Exp DOT ID {printf("Exp\n");}
-	| ID {printf("Exp\n");}
-	| INT {printf("Exp\n");}
-	| FLOAT {printf("Exp\n");}
+Exp : Exp ASSIGNOP Exp {insert("Exp", 3);}
+	| Exp AND Exp {insert("Exp", 3);}
+	| Exp OR Exp {insert("Exp", 3);}
+	| Exp RELOP Exp {insert("Exp", 3);}
+	| Exp PLUS Exp {insert("Exp", 3);}
+	| Exp MINUS Exp {insert("Exp", 3);}
+	| Exp STAR Exp {insert("Exp", 3);}
+	| Exp DIV Exp {insert("Exp", 3);}
+	| LP Exp RP {insert("Exp", 3);}
+	| MINUS Exp {insert("Exp", 2);}
+	| NOT Exp {insert("Exp", 2);}
+	| ID LP Args RP {insert("Exp", 4);}
+	| ID LP RP {insert("Exp", 3);}
+	| Exp LB Exp RB {insert("Exp", 4);}
+	| Exp DOT ID {insert("Exp", 3);}
+	| ID {insert("Exp", 1);}
+	| INT {insert("Exp", 1);}
+	| FLOAT {insert("Exp", 1);}
 	;
-Args : Exp COMMA Args {printf("Args\n");}
-	| Exp {printf("Args\n");}
+Args : Exp COMMA Args {insert("Args", 3);}
+	| Exp {insert("Args", 1);}
 	;
 
 %%
