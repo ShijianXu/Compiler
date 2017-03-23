@@ -5,5 +5,5 @@ typedef struct node
 	struct node *first_child, *next_sibling;
 }tree;
 
-tree *insertTree(char *ch, tree *parent, tree *pre_sibling);
+tree *insert(char *ch, int num, ...);
 tree *create(char *ch);
