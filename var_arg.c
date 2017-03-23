@@ -3,7 +3,7 @@
 #include <stdarg.h>
 #include "tree.h"
 
-int demo(int a , ...)
+int demo(char *ch, int a , ...)
 {
 	va_list argp;
 	tree *para;
@@ -24,5 +24,5 @@ int main()
 	tree *node1 = create("a");
 	tree *node2 = create("b");
 	tree *node3 = create("c");
-	demo(3,node1, node2, node3);
+	demo("Hello", 3,node1, node2, node3);
 }
