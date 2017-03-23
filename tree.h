@@ -6,5 +6,4 @@ typedef struct node
 }tree;
 
 tree *insert(char *ch, int num, ...);
-tree *create(char *ch);
 void treePrint(tree *root);

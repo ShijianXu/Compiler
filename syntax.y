@@ -141,7 +141,6 @@ int main(int argc, char** argv)
 		yyparse();
 	}while(!feof(yyin));
 	
-	printf("syntax tree-----\n");
 	treePrint(root);
 }
 int yyerror(char* msg)
