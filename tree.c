@@ -4,7 +4,7 @@
 #include <string.h>
 #include "tree.h"
 
-tree *insert(char *ch, int num, int lineno, ...)
+tree *insert(char *ch, int num, char *value, int lineno, ...)
 {
 	va_list argp;
 	tree *para;
@@ -14,6 +14,9 @@ tree *insert(char *ch, int num, int lineno, ...)
 
 	tree *parent = (tree *)malloc(sizeof(tree));
 	parent->name = ch;
+	//必须把内容拷贝下来，不能用指针去指
+	strcpy(parent->value, value);
+
 	if(lineno != -1)
 		parent->line = lineno;
 
@@ -68,7 +71,12 @@ void treePrint(tree *root, int space)
 	{
 		for(int i=0;i<space;i++)
 			printf(" ");
-		printf("%s\n", root->name);
+		if(strcmp(root->name, "ID")==0 || strcmp(root->name,"TYPE")==0)
+			printf("%s: %s\n", root->name, root->value);
+		else if(strcmp(root->name, "INT")==0 || strcmp(root->name, "FLOAT")==0)
+			printf("%s: value\n", root->name);
+		else
+			printf("%s\n",root->name);
 	}
 
 	if(root->first_child != NULL)
