@@ -23,33 +23,33 @@ float ({digit}+\.{digit}+)|({digit}*\.{digit}*[Ee][+-]?{digit}+)
 
 {ws} {/*no action and no return*/}
 \n { yycolumn = 1 ;}
-struct { yylval.nd = insert("STRUCT", 0); return STRUCT; }
-return { yylval.nd = insert("RETURN", 0); return RETURN; }
-if { yylval.nd = insert("IF", 0); return IF; }
-else { yylval.nd = insert("ELSE", 0); return ELSE; }
-while { yylval.nd = insert("WHILE", 0); return WHILE; }
-{type} { yylval.nd = insert("TYPE", 0); return TYPE; }
-{int} { yylval.nd = insert("INT", 0); return INT; }
-{float} { yylval.nd = insert("FLOAT", 0); return FLOAT; }
-{id} { yylval.nd = insert("ID", 0); return ID; }
-";" { yylval.nd = insert("SEMI", 0); return SEMI; }
-"," { yylval.nd = insert("COMMA", 0); return COMMA; }
-"=" { yylval.nd = insert("ASSIGNOP", 0); return ASSIGNOP; }
-">"|"<"|">="|"<="|"=="|"!=" { yylval.nd = insert("RELOP", 0); return RELOP; }
-"+" { yylval.nd = insert("PLUS", 0); return PLUS; }
-"-" { yylval.nd = insert("MINUS", 0); return MINUS; }
-"*" { yylval.nd = insert("STAR", 0); return STAR; }
-"/" { yylval.nd = insert("DIV", 0); return DIV; }
-"&&" { yylval.nd = insert("AND", 0); return AND; }
-"||" { yylval.nd = insert("OR", 0); return OR; }
-"." { yylval.nd = insert("DOT", 0); return DOT; }
-"!" { yylval.nd = insert("NOT", 0); return NOT; }
-"(" { yylval.nd = insert("LP", 0); return LP; }
-")" { yylval.nd = insert("RP", 0); return RP; }
-"[" { yylval.nd = insert("LB", 0); return LB; }
-"]" { yylval.nd = insert("RB", 0); return RB; }
-"{" { yylval.nd = insert("LC", 0); return LC; }
-"}" { yylval.nd = insert("RC", 0); return RC; }
+struct { yylval.nd = insert("STRUCT", 0, yylineno); return STRUCT; }
+return { yylval.nd = insert("RETURN", 0, yylineno); return RETURN; }
+if { yylval.nd = insert("IF", 0, yylineno); return IF; }
+else { yylval.nd = insert("ELSE", 0, yylineno); return ELSE; }
+while { yylval.nd = insert("WHILE", 0, yylineno); return WHILE; }
+{type} { yylval.nd = insert("TYPE", 0, yylineno); return TYPE; }
+{int} { yylval.nd = insert("INT", 0, yylineno); return INT; }
+{float} { yylval.nd = insert("FLOAT", 0, yylineno); return FLOAT; }
+{id} { yylval.nd = insert("ID", 0, yylineno); return ID; }
+";" { yylval.nd = insert("SEMI", 0, yylineno); return SEMI; }
+"," { yylval.nd = insert("COMMA", 0, yylineno); return COMMA; }
+"=" { yylval.nd = insert("ASSIGNOP", 0, yylineno); return ASSIGNOP; }
+">"|"<"|">="|"<="|"=="|"!=" { yylval.nd = insert("RELOP", 0, yylineno); return RELOP; }
+"+" { yylval.nd = insert("PLUS", 0, yylineno); return PLUS; }
+"-" { yylval.nd = insert("MINUS", 0, yylineno); return MINUS; }
+"*" { yylval.nd = insert("STAR", 0, yylineno); return STAR; }
+"/" { yylval.nd = insert("DIV", 0, yylineno); return DIV; }
+"&&" { yylval.nd = insert("AND", 0, yylineno); return AND; }
+"||" { yylval.nd = insert("OR", 0, yylineno); return OR; }
+"." { yylval.nd = insert("DOT", 0, yylineno); return DOT; }
+"!" { yylval.nd = insert("NOT", 0, yylineno); return NOT; }
+"(" { yylval.nd = insert("LP", 0, yylineno); return LP; }
+")" { yylval.nd = insert("RP", 0, yylineno); return RP; }
+"[" { yylval.nd = insert("LB", 0, yylineno); return LB; }
+"]" { yylval.nd = insert("RB", 0, yylineno); return RB; }
+"{" { yylval.nd = insert("LC", 0, yylineno); return LC; }
+"}" { yylval.nd = insert("RC", 0, yylineno); return RC; }
 "//" {char c=input();
 	while (c!='\n') c=input();
 }
