@@ -1,6 +1,7 @@
 %{
 	#include "syntax.tab.h"
 	int yycolumn = 1;
+	int no_error = 1;
 	#define YY_USER_ACTION \
 	yylloc.first_line = yylloc.last_line = yylineno; \
 	yylloc.first_column = yycolumn; \
@@ -62,24 +63,8 @@ while { yylval.nd = insert("WHILE", 0, "none", yylineno); return WHILE; }
 	}
 }
 .  {
+	no_error=0;
 	printf("Error type A at Line %d: Mysterious characters \"%s\".\n",yylineno, yytext);
 }
 
 %%
-
-/*int main(int argc, char** argv)
-{
-	if (argc>1)
-	{
-		FILE* f = fopen(argv[1],"r");
-		if(!f)
-		{
-			perror(argv[1]);
-			return 1;
-		}
-	}
-	//yylex();
-	yyrestart(f);
-	yyparse();
-	return 0;
-}*/

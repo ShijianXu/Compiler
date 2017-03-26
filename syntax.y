@@ -4,6 +4,7 @@
 	#include "tree.h"
 	int yylex();
 	int yyerror(char *msg);
+	extern int no_error;
 	tree *root;
 %}
 %locations
@@ -89,12 +90,14 @@ DefList : Def DefList {$$=insert("DefList", 2, "none", -1, $1, $2);}
 	| /* empty */ {$$=insert("DefList", 0, "none", -1);}
 	;
 Def : Specifier DecList SEMI {$$=insert("Def", 3, "none", -1, $1, $2, $3);}
+	| error SEMI {no_error = 0;}
 	;
 DecList : Dec {$$=insert("DecList", 1, "none", -1, $1);}
 	| Dec COMMA DecList {$$=insert("DecList", 3, "none", -1, $1, $2, $3);}
 	;
 Dec : VarDec {$$=insert("Dec", 1, "none", -1, $1);}
 	| VarDec ASSIGNOP Exp {$$=insert("Dec", 3, "none", -1, $1, $2, $3);}
+	| VarDec ASSIGNOP error {no_error = 0;}
 	;
 /* Expressions */
 Exp : Exp ASSIGNOP Exp {$$=insert("Exp", 3, "none", -1, $1, $2, $3);}
@@ -111,6 +114,7 @@ Exp : Exp ASSIGNOP Exp {$$=insert("Exp", 3, "none", -1, $1, $2, $3);}
 	| ID LP Args RP {$$=insert("Exp", 4, "none", -1, $1, $2, $3, $4);}
 	| ID LP RP {$$=insert("Exp", 3, "none", -1, $1, $2, $3);}
 	| Exp LB Exp RB {$$=insert("Exp", 4, "none", -1, $1, $2, $3, $4);}
+	| Exp LB error RB {no_error=0;}
 	| Exp DOT ID {$$=insert("Exp", 3, "none", -1, $1, $2, $3);}
 	| ID {$$=insert("Exp", 1, "none", -1, $1);}
 	| INT {$$=insert("Exp", 1, "none", -1, $1);}
@@ -137,13 +141,13 @@ int main(int argc, char** argv)
 	yyin = f;
 	yyrestart(f);
 	do{
-		/*yydebug = 1;*/
+		//yydebug = 1;
 		yyparse();
 	}while(!feof(yyin));
-	
-	treePrint(root,0);
+	if(no_error)	
+		treePrint(root,0);
 }
 int yyerror(char* msg)
 {       
-	fprintf(stderr, "error line,column %d, %d: %s\n",yylloc.first_line, yylloc.first_column,msg);
+	fprintf(stderr, "Error type B at Line %d: %s\n",yylloc.first_line,msg);
 }
