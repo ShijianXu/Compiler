@@ -67,15 +67,150 @@ void treePrint(tree *root, int space)
 			printf(" ");
 		printf("%s (%d)\n", root->name, root->line);
 	}
-	else if(root->empty==0 && root->terminal==1)
+	else if(root->empty==0 && root->terminal==1) 	//terminals
 	{
 		for(int i=0;i<space;i++)
 			printf(" ");
 		if(strcmp(root->name, "ID")==0 || strcmp(root->name,"TYPE")==0)
 			printf("%s: %s\n", root->name, root->value);
-		else if(strcmp(root->name, "INT")==0 || strcmp(root->name, "FLOAT")==0)
-			printf("%s: value\n", root->name);
-		else
+		else if(strcmp(root->name, "INT")==0)
+		{
+			if(strlen(root->value)==1) 	//0-9,dec
+				printf("%s: %d\n", root->name, atoi(root->value));
+			else if(root->value[0]=='0' && (root->value[1]=='x' || root->value[1]=='X')) //hex,
+			{
+				int v=0;
+				int len=strlen(root->value);
+				for(int i = 2;i<len;i++)
+				{
+					if(root->value[i]>='0' && root->value[i]<='9')
+						v = v*16+(root->value[i]-'0');
+					else if(root->value[i]>='a' && root->value[i]<='f')
+						v = v*16+((root->value[i]-'a')+10);
+					else if(root->value[i]>='A' && root->value[i]<='F')
+						v = v*16+((root->value[i]-'A')+10);
+				}
+				printf("%s: %d\n", root->name, v);
+			}
+			else if(root->value[0]=='0')
+			{
+				int v=0;
+				int len=strlen(root->value);
+				for(int i=1;i<len;i++)
+					v = v*8+(root->value[i]-'0');
+				printf("%s: %d\n", root->name, v);
+			}
+			else	//dec
+			{
+				printf("%s: %d\n", root->name, atoi(root->value));
+			}
+			//printf("%s: value\n", root->name);
+		}
+		else if(strcmp(root->name, "FLOAT")==0)
+		{
+			int len=strlen(root->value);
+			int normal = 1;
+			for(int i=0;i<len;i++)
+			{
+				if(root->value[i]=='E' || root->value[i]=='e')
+				{
+					normal = 0;
+					break;
+				}
+			}
+			double v = 0;
+			double dec = 0;
+			int dot_pos = 0;
+			if(normal==1)	//normal float,小数点前后必有数字出现
+			{
+				int before_dot = 1;
+				for(int i=0;i<len;i++)
+				{
+					if(before_dot)
+					{
+						if(root->value[i]!='.')
+							v=v*10+(root->value[i]-'0');
+						else if(root->value[i]=='.')
+						{
+							dot_pos = i;
+							before_dot = 0;
+							continue;
+						}
+					}
+					if(!before_dot)
+					{
+						int num = i-dot_pos;
+						double temp = root->value[i]-'0';
+						for(int j =0;j<num;j++)
+						{
+							temp=temp/10;
+						}
+						dec+=temp;
+					}
+				}
+				v=v+dec;
+				printf("%s: %f\n", root->name, v);
+			}
+			else	//science float
+			{
+				double v = 0;
+				double dec =0;
+				int pos = 1;
+				int e_pos = 0;
+				int dot_pos = 0;
+				int len = strlen(root->value);
+				int num_10 = 0;
+				for(int i=0;i<len;i++)
+				{
+					if(root->value[i]=='-')
+						pos = 0;
+					if(root->value[i]=='.')
+						dot_pos = i;
+					if(root->value[i]=='e' || root->value[i]=='E')
+						e_pos = i;
+				}
+
+				for(int i=0;i<dot_pos;i++)
+				{
+					v=v*10+(root->value[i]-'0');
+				}
+				for(int i=dot_pos+1;i<e_pos;i++)
+				{
+					int num = i -dot_pos;
+					double temp = root->value[i]-'0';
+					for(int j=0;j<num;j++)
+					{
+						temp=temp/10;
+					}
+					dec+=temp;
+				}
+				v = v+dec;
+				if(pos)
+				{
+					for(int i=e_pos+1;i<len;i++)
+					{
+						if(root->value[i]=='+')
+							continue;
+						num_10=num_10*10+(root->value[i]-'0');
+					}
+					for(int i=0;i<num_10;i++)
+						v = v*10;
+				}
+				if(!pos)
+				{
+					for(int i=e_pos+1;i<len;i++)
+					{
+						if(root->value[i]=='-')
+							continue;
+						num_10=num_10*10+(root->value[i]-'0');
+					}
+					for(int i=0;i<num_10;i++)
+						v = v/10;
+				}
+				printf("%s: %f\n", root->name, v);	
+			}
+		}
+		else	//normal terminals
 			printf("%s\n",root->name);
 	}
 
