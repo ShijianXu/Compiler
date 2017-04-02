@@ -51,6 +51,8 @@ while { yylval.nd = insert("WHILE", 0, "none", yylineno); return WHILE; }
 "]" { yylval.nd = insert("RB", 0, "none", yylineno); return RB; }
 "{" { yylval.nd = insert("LC", 0, "none", yylineno); return LC; }
 "}" { yylval.nd = insert("RC", 0, "none", yylineno); return RC; }
+[/][*][^*]*[*]+([^*/][^*]*[*]+)*[/]       { /* DO NOTHING */ }
+
 "//" {char c=input();
 	while (c!='\n') c=input();
 }
