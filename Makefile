@@ -14,6 +14,6 @@ lex.yy.c: lexical.l
 
 .PHONY: clean run
 run:
-	./parser test.c
+	./parser ../test/test1.c ../test/test2.c ../test/test3.c 
 clean:
 	rm -f parser lex.yy.c syntax.tab.c syntax.tab.h syntax.output

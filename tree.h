@@ -4,7 +4,7 @@ typedef struct node
 	int line;
 	int empty;
 	int terminal;
-	int space_num;
+	//int space_num;
 	char value[40];
 	struct node *first_child, *next_sibling;
 }tree;
