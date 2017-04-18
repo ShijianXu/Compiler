@@ -146,8 +146,10 @@ int main(int argc, char** argv)
 		yyparse();
 	}while(!feof(yyin));
 	if(no_error)
+	{
 		semantic_check(root);
-	//	treePrint(root,0);
+		treePrint(root,0);
+	}
 }
 int yyerror(char* msg)
 {       
