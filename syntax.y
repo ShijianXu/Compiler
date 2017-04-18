@@ -144,8 +144,8 @@ int main(int argc, char** argv)
 		//yydebug = 1;
 		yyparse();
 	}while(!feof(yyin));
-	if(no_error)	
-		treePrint(root,0);
+	//if(no_error)	
+	//	treePrint(root,0);
 }
 int yyerror(char* msg)
 {       
