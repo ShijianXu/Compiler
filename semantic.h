@@ -1,1 +1,1 @@
-void semantic_check();
+void semantic_check(tree *root);

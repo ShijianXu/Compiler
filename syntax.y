@@ -2,6 +2,7 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include "tree.h"
+	#include "semantic.h"
 	int yylex();
 	int yyerror(char *msg);
 	extern int no_error;
@@ -144,7 +145,8 @@ int main(int argc, char** argv)
 		//yydebug = 1;
 		yyparse();
 	}while(!feof(yyin));
-	//if(no_error)	
+	if(no_error)
+		semantic_check(root);
 	//	treePrint(root,0);
 }
 int yyerror(char* msg)

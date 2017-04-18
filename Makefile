@@ -4,7 +4,7 @@ BISON = bison
 CFLAGS = -std=c99
 
 parser: syntax.tab.c tree.c
-	$(CC) -o parser tree.c syntax.tab.c -lfl -ly
+	$(CC) -o parser tree.c semantic.c syntax.tab.c -lfl -ly
 
 syntax.tab.c: syntax.y lex.yy.c
 	$(BISON) -d -t -v syntax.y
