@@ -1,6 +1,10 @@
+#ifndef TREE_H_
+#define TREE_H_
+
 typedef struct node
 {
 	char *name;
+	int child_num;
 	int line;
 	int empty;
 	int terminal;
@@ -11,3 +15,5 @@ typedef struct node
 
 tree *insert(char *ch, int num, char *value, int lineno, ...);
 void treePrint(tree *root, int space);
+
+#endif

@@ -21,7 +21,7 @@ int main()
 	int c1 = insert_symtable(c);
 	printf("%d %d %d\n", a1,b1,c1);
 
-	sympt head = hash_head[14458];
+	sympt head = symHashHead[14458];
 	sympt p = head;
 	while(p!=NULL)
 	{

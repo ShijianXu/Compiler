@@ -14,6 +14,7 @@ tree *insert(char *ch, int num, char *value, int lineno, ...)
 
 	tree *parent = (tree *)malloc(sizeof(tree));
 	parent->name = ch;
+	parent->child_num = num;
 	//必须把内容拷贝下来，不能用指针去指
 	strcpy(parent->value, value);
 
