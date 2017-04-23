@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-#include <assert.h>I
+#include <assert.h>
 #include "semantic.h"
 
 Type Specifier(tree* root)
@@ -40,26 +40,51 @@ Type Specifier(tree* root)
 	}
 }
 
-void VarDec(tree *root, Type type, struct Param* para)
+void VarDec(tree *root, Type pre_type, struct Param* para)
 {
-	
+	if(para->type == NULL)
+	//this is the first call of VarDec
+	{
+		Type type = pre_type;	//pre_type records what kind this array is
+		para->type = type;
+	}
+
+	if(root->child_num == 1)
+	{
+		tree* child = root->first_child;
+		strcpy(para->name, child->name);
+		return;
+	}
+	else
+	{
+		assert(root->child_num == 3);
+		tree* child = root->first_child;
+
+		Type type = (Type)malloc(sizeof(struct Type_));
+		type->kind = ARRAY;
+		type->array.size=atoi(child->next_sibling->next_sibling->name);
+		type->array.elem = para->type;
+		para->type = type;
+
+		VarDec(child, pre_type, para);
+		return;
+	}
 }
 
 void ParamDec(tree* root, fdefpt fun)
 {
 	//每个ParamDec定义一个形参
 	assert(strcmp(root->name, "ParamDec")==0);
-	tree* child = root->first_child;
-	
+	//malloc a param object
 	struct Param* para = (struct Param*)malloc(sizeof(struct Param));
+	para->type = NULL;
+
+	tree* child = root->first_child; //Specifier
 	Type type = Specifier(child);	//形参基本类型，但有可能是 数组
-	//para->type = type;
-	//para->next_para = NULL;
-	child = child->next_sibling;
-	//ParamDec 第二个参数 VarDec, 获得形参的名和具体类型(basic or array)
-	VarDec(child, ,type, para);
-
-
+	
+	child = child->next_sibling;	//VarDec, include name, type(int or int[10])
+	VarDec(child, type, para);
+	
 	if(fun->para_list == NULL)
 	{
 		fun->para_list = para;
@@ -76,34 +101,41 @@ void VarList(tree* root, fdefpt fun)
 {
 	//VarList : ParamDec COMMA | ParamDec
 	assert(strcmp(root->name, "VarList")==0);
-	if(root->child_num == 1)
+	if(root->child_num == 1)	//this function has only one parameter
 	{
 		tree* child = root->first_child; //ParamDec
 		ParamDec(child, fun);
 		return;
 	}
-	else if(root->child_num == 3)
+	else if(root->child_num == 3)	//this function has more than one para
 	{
+		tree* child = root->first_child;
+		ParamDec(child, fun);
+
+		child = child->next_sibling->next_sibling;//Another VarList
+		VarList(child, fun);
+		return;
 	}
 }
 
 fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 {
-	fdefpt fun = (fdefpt)malloc(sizeof(FuncDefTableNode));
+	//malloc an object
+	fdefpt fun = (fdefpt)malloc(sizeof(struct FuncDefTableNode));
 	//some simplification: the reture type of function can only be INT OR FLOAT
-	fun->return_type = type_->basic;	//return_type
-	//
+	fun->return_type = type_->basic;//return_type
+	//extract the name, paramlist of the function
 	tree *child = root->first_child;
 	strcpy(fun->name, child->name);	//func id
 	
 	child = child->next_sibling->next_sibling; //RP or VarList
-	if(strcmp(child->name, "RP")==0)
+	if(strcmp(child->name, "RP")==0)	//no parameter
 	{
 		fun->para_num = 0;
 		fun->para_list = NULL;
 		return fun;
 	}
-	else if(strcmp(child->name,"VarList")==0)
+	else if(strcmp(child->name,"VarList")==0)//param list
 	{
 		VarList(child, fun);
 		return fun;
@@ -113,7 +145,6 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 		printf("FunDec has no other gen.\n");
 		return NULL;
 	}
-	
 }
 
 void dfs(tree* root)
@@ -128,12 +159,21 @@ void dfs(tree* root)
 		{
 			if(strcmp(child->next_sibling->name,"Compst")==0)	//Fun Definition
 			{
-				fdefpt = FunDec(child, type);
+				fdefpt func = FunDec(child, type);
+				//insert into function table
+				int ret_val = insert_funcDefTable(func);
+				printf("%d\n", ret_val);
 			}
 			else
 			{
 				//fun declaration
 			}
+		}
+		else if(strcmp(child->name, "SEMI")==0)
+		{
+		}
+		else if(strcmp(child->name, "ExtDecList")==0)
+		{
 		}
 	}
 	else
@@ -150,6 +190,7 @@ void semantic_check(tree *root)
 	init_hash_head();
 	dfs(root);
 	printf("checking\n");
+	printf("\n\n");
 }
 
 //符号表的大小确定，为0x3fff<-->16384个
@@ -178,10 +219,28 @@ void init_hash_head()
 	}
 }
 
-int insert_symtable(sympt node)
+int insert_funcDefTable(fdefpt node)
 {
 	unsigned index = hash(node->name);
 	printf("%d\n", index);
+	if(funcDefHashHead[index]==NULL)
+	{
+		funcDefHashHead[index]=node;
+		node->next = NULL;
+		return 0;
+	}
+	else
+	{
+		node->next = funcDefHashHead[index];
+		funcDefHashHead[index]=node;
+		return 1;
+	}
+}
+
+int insert_symtable(sympt node)
+{
+	unsigned index = hash(node->name);
+	//printf("%d\n", index);
 
 	if(symHashHead[index] == NULL)
 	{

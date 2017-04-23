@@ -9,19 +9,21 @@ typedef struct FunParaList_* FunParaList;
 typedef struct SymTableNode* sympt;
 typedef struct FuncDefTableNode* fdefpt;
 typedef struct FuncDecTableNode* fdecpt;
+typedef struct StructTableNode* spt;
+enum basic_type { INT_, FLOAT_};
 
 struct StructTableNode
 {
-	char *name;	//结构体名
+	char name[40];	//结构体名
 	Type type;
-	struct StructTableNode *next;
+	spt next;
 };
 
 struct FuncDecTableNode
 {
 	char name[40];
 	Type type;
-	fdecpt *next;
+	fdecpt next;
 };
 
 struct Param
@@ -34,10 +36,10 @@ struct Param
 struct FuncDefTableNode
 {
 	char name[40];
-	enum {INT_, FLOAT_ } return_type;
+	enum basic_type return_type;
 	int para_num;
 	struct Param* para_list;	
-	fdefpt *next;
+	fdefpt next;
 };
 
 struct SymTableNode
@@ -51,10 +53,10 @@ struct SymTableNode
 
 struct Type_
 {
-	enum { BASIC, ARRAY, STRUCTURE} kind;
+	enum { NONE, BASIC, ARRAY, STRUCTURE} kind;
 	union
 	{
-		enum {INT_, FLOAT_ } basic;	//基本类型，具体是int还是float
+		enum basic_type basic;	//基本类型，具体是int还是float
 		//int a[2][3], 第一分量的type是array,第一分量维度是2，第二分量type是int,第二分量维度是3
 		struct
 		{ 
@@ -75,13 +77,21 @@ struct FieldList_
 
 #define hash_size 0x3fff
 sympt symHashHead[hash_size];
-sympt funcDefHashHead[hash_size];	//definition
-sympt funcDecHashHead[hash_size];	//declaration
-sympt structDefHashHead[hash_size];
+fdefpt funcDefHashHead[hash_size];	//definition
+fdecpt funcDecHashHead[hash_size];	//declaration
+spt structDefHashHead[hash_size];
 
 void semantic_check(tree *root);
 void init_hash_head();
 int insert_symtable(sympt node);
+int insert_funcDefTable(fdefpt func);
 unsigned hash(char *name);
+
+void dfs(tree* root);
+fdefpt FunDec(tree *root, Type type_);
+void VarList(tree* root, fdefpt fun);
+void ParamDec(tree* root, fdefpt fun);
+void VarDec(tree* root, Type pre_type, struct Param* para);
+Type Specifier(tree* root);
 
 #endif
