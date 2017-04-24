@@ -2,6 +2,6 @@ int main(int a, float b[10][3])
 {
 }
 
-float func(int b[10], int c[3])
+float func(int c[3])
 {
 }

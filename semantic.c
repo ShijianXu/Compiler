@@ -52,7 +52,7 @@ void VarDec(tree *root, Type pre_type, struct Param* para)
 	if(root->child_num == 1)
 	{
 		tree* child = root->first_child;
-		strcpy(para->name, child->name);
+		strcpy(para->name, child->value);
 		return;
 	}
 	else
@@ -84,7 +84,8 @@ void ParamDec(tree* root, fdefpt fun)
 
 	child = child->next_sibling;	//VarDec, include name, type(int or int[10])
 	VarDec(child, type, para);
-	
+
+	fun->para_num += 1;
 	if(fun->para_list == NULL)
 	{
 		fun->para_list = para;
@@ -124,6 +125,7 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	fdefpt fun = (fdefpt)malloc(sizeof(struct FuncDefTableNode));
 	//some simplification: the reture type of function can only be INT OR FLOAT
 	fun->return_type = type_->basic;//return_type
+	fun->para_num = 0;
 	//extract the name, paramlist of the function
 	tree *child = root->first_child;
 	strcpy(fun->name, child->value);	//func id
@@ -264,10 +266,10 @@ void check_functable()
 				struct Param* pp = p->para_list;
 				while(pp!=NULL)
 				{
-					printf("%s ", pp->name);
+					printf("	para_name: %s;", pp->name);
 					
 					Type tp = pp->type;
-					printf("param type: %d ", tp->kind);
+					printf("param type: %d\n", tp->kind);
 
 					pp = pp->next_para;
 				}
