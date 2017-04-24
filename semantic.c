@@ -197,6 +197,7 @@ void semantic_check(tree *root)
 	init_hash_head();
 	printf("checking\n");
 	dfs(root, 0);
+	check_functable();
 	printf("\n\n");
 }
 
@@ -242,6 +243,39 @@ int insert_funcDefTable(fdefpt node)
 		node->next = funcDefHashHead[index];
 		funcDefHashHead[index]=node;
 		return 1;
+	}
+}
+
+//check whether function has successfully inserted into the table
+void check_functable()
+{
+	for(int i = 0; i < hash_size; i++)
+	{
+		if(funcDefHashHead[i]!=NULL)
+		{
+			fdefpt p = funcDefHashHead[i];
+			while(p!=NULL)
+			{
+				printf("function name: %s\n", p->name);
+				//specifier 只有基本类型和结构体，然函数不会返回结构体
+				printf("return type: %d\n", p->return_type);
+				printf("param num: %d\n", p->para_num);
+				printf("params are:\n");
+				struct Param* pp = p->para_list;
+				while(pp!=NULL)
+				{
+					printf("%s ", pp->name);
+					
+					Type tp = pp->type;
+					printf("param type: %d ", tp->kind);
+
+					pp = pp->next_para;
+				}
+
+
+				p=p->next;
+			}
+		}
 	}
 }
 
