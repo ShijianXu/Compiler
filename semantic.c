@@ -57,7 +57,7 @@ void VarDec(tree *root, Type pre_type, struct Param* para)
 	}
 	else
 	{
-		assert(root->child_num == 3);
+		assert(root->child_num == 4);
 		tree* child = root->first_child;
 
 		Type type = (Type)malloc(sizeof(struct Type_));
@@ -81,7 +81,7 @@ void ParamDec(tree* root, fdefpt fun)
 
 	tree* child = root->first_child; //Specifier
 	Type type = Specifier(child);	//形参基本类型，但有可能是 数组
-	
+
 	child = child->next_sibling;	//VarDec, include name, type(int or int[10])
 	VarDec(child, type, para);
 	
@@ -99,7 +99,7 @@ void ParamDec(tree* root, fdefpt fun)
 
 void VarList(tree* root, fdefpt fun)
 {
-	//VarList : ParamDec COMMA | ParamDec
+	//VarList : ParamDec COMMA VarList | ParamDec
 	assert(strcmp(root->name, "VarList")==0);
 	if(root->child_num == 1)	//this function has only one parameter
 	{
@@ -126,7 +126,7 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	fun->return_type = type_->basic;//return_type
 	//extract the name, paramlist of the function
 	tree *child = root->first_child;
-	strcpy(fun->name, child->name);	//func id
+	strcpy(fun->name, child->value);	//func id
 	
 	child = child->next_sibling->next_sibling; //RP or VarList
 	if(strcmp(child->name, "RP")==0)	//no parameter
@@ -147,17 +147,22 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	}
 }
 
-void dfs(tree* root)
+void dfs(tree* root, int space)
 {
+	for(int i=0; i<space; i++)
+		printf(" ");
+	printf("%s\n", root->name);
+
 	if(strcmp(root->name, "ExtDef")==0)
 	{
 		tree *child;
 		child = root->first_child;	//Specifier
 		Type type = Specifier(child);
 		child = child->next_sibling;	//ExtDefList/SEMI/FunDec
+
 		if(strcmp(child->name, "FunDec")==0)
 		{
-			if(strcmp(child->next_sibling->name,"Compst")==0)	//Fun Definition
+			if(strcmp(child->next_sibling->name,"CompSt")==0)	//Fun Definition
 			{
 				fdefpt func = FunDec(child, type);
 				//insert into function table
@@ -176,20 +181,18 @@ void dfs(tree* root)
 		{
 		}
 	}
-	else
-	{
-		if(root->first_child != NULL)
-			dfs(root->first_child);
-		if(root->next_sibling != NULL)
-			dfs(root->next_sibling);
-	}
+	
+	if(root->first_child != NULL)
+		dfs(root->first_child, space+2);
+	if(root->next_sibling != NULL)
+		dfs(root->next_sibling, space);
 }
 
 void semantic_check(tree *root)
 {
 	init_hash_head();
-	dfs(root);
 	printf("checking\n");
+	dfs(root,0);
 	printf("\n\n");
 }
 
@@ -221,6 +224,7 @@ void init_hash_head()
 
 int insert_funcDefTable(fdefpt node)
 {
+	printf("This fucntion name is %s\n", node->name);
 	unsigned index = hash(node->name);
 	printf("%d\n", index);
 	if(funcDefHashHead[index]==NULL)

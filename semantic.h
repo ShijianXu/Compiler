@@ -87,7 +87,7 @@ int insert_symtable(sympt node);
 int insert_funcDefTable(fdefpt func);
 unsigned hash(char *name);
 
-void dfs(tree* root);
+void dfs(tree* root, int space);
 fdefpt FunDec(tree *root, Type type_);
 void VarList(tree* root, fdefpt fun);
 void ParamDec(tree* root, fdefpt fun);
