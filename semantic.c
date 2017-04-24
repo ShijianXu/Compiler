@@ -149,9 +149,13 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 
 void dfs(tree* root, int space)
 {
-	for(int i=0; i<space; i++)
-		printf(" ");
-	printf("%s\n", root->name);
+/*	if(root->empty == 0)
+	{
+		for(int i=0; i<space; i++)
+			printf(" ");
+		printf("%s\n", root->name);
+	}
+*/
 
 	if(strcmp(root->name, "ExtDef")==0)
 	{
@@ -192,7 +196,7 @@ void semantic_check(tree *root)
 {
 	init_hash_head();
 	printf("checking\n");
-	dfs(root,0);
+	dfs(root, 0);
 	printf("\n\n");
 }
 
