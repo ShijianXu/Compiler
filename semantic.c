@@ -270,6 +270,19 @@ void check_functable()
 					
 					Type tp = pp->type;
 					printf("param type: %d\n", tp->kind);
+					switch(tp->kind)
+					{
+						case 2:
+						{
+							Type ty = tp->array.elem;
+							while(ty!=NULL)
+							{
+								printf("		array size: %d\n", ty->array.size);
+								ty= ty->array.elem;
+							}
+							break;
+						}
+					}
 
 					pp = pp->next_para;
 				}
