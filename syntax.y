@@ -1,7 +1,6 @@
 %{
 	#include <stdio.h>
 	#include <stdlib.h>
-	#include "tree.h"
 	#include "semantic.h"
 	int yylex();
 	int yyerror(char *msg);

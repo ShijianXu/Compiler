@@ -1,6 +1,8 @@
 #ifndef TREE_H_
 #define TREE_H_
 
+#include "semantic.h"
+
 typedef struct node
 {
 	char *name;
@@ -11,6 +13,9 @@ typedef struct node
 	//int space_num;
 	char value[40];
 	struct node *first_child, *next_sibling;
+
+	Type type;
+	struct Param* para;
 }tree;
 
 tree *insert(char *ch, int num, char *value, int lineno, ...);

@@ -17,3 +17,10 @@ and it can only be:
 StructSpecifier-->STRUCT Tag: a struct declaration, and must followed by a param
 StructSpecifier-->STRUCT OptTag LC DefList RC: a struct definition
 
+#####
+!Important
+Some functions need to be independent from the kind of components they are dealing with. For example, VarDec() may be used by many syntax generators and the parameters of VarDec() should not include the param like func or struct etc.
+
+Function Lists:
+VarDec()
+DefList()

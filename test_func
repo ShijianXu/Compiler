@@ -1,0 +1,10 @@
+int func(int a, float b[10][3])
+{
+	int c;
+}
+
+float main(int d[100][400][10][4], float e[10][10][10])
+{
+	int f;
+	float g;
+}

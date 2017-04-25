@@ -1,6 +1,12 @@
-struct b aa;
-
-struct a
+int main()
 {
+}
 
-};
+int func(int a, float b[10][3])
+{
+}
+
+float main(int c[100][400][10][4], float a[10][10][10])
+{
+	int a;
+}

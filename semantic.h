@@ -1,8 +1,6 @@
 #ifndef SEMANTIC_H_
 #define SEMANTIC_H_
 
-#include "tree.h"
-
 typedef struct Type_* Type;
 typedef struct FieldList_* FieldList;
 typedef struct FunParaList_* FunParaList;
@@ -12,6 +10,30 @@ typedef struct FuncDecTableNode* fdecpt;
 typedef struct StructTableNode* spt;
 enum basic_type { INT_, FLOAT_};
 
+//####################################
+typedef struct node
+{
+    char *name;
+    int child_num;
+    int line;
+ 	int empty;
+    int terminal;
+    //int space_num;
+	char value[40];
+	struct node *first_child, *next_sibling;
+
+	//##################
+	int structdef;
+	Type type;
+	struct Param* para;
+	spt stpt;
+}tree;
+
+tree *insert(char *ch, int num, char *value, int lineno, ...);
+void treePrint(tree *root, int space);
+
+
+//#####################################
 struct StructTableNode
 {
 	char name[40];	//结构体名
@@ -92,10 +114,13 @@ void dfs(tree* root, int space);
 fdefpt FunDec(tree *root, Type type_);
 void VarList(tree* root, fdefpt fun);
 void ParamDec(tree* root, fdefpt fun);
-void VarDec(tree* root, Type pre_type, struct Param* para);
+void VarDec(tree* root);
 Type Specifier(tree* root);
 void check_functable();
 spt StructSpecifier(Type type, tree* root);
-void DefList(spt stpt, tree* root);
+void DefList(tree* root);
+void Def(tree* node);
+void CompSt(tree* root);
+void DecList(Type type, tree* root);
 
 #endif
