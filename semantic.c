@@ -163,11 +163,11 @@ void dfs(tree* root, int space)
 	{
 		tree *child;
 		child = root->first_child;	//Specifier
-		Type type = Specifier(child);
-		child = child->next_sibling;	//ExtDefList/SEMI/FunDec
-
-		if(strcmp(child->name, "FunDec")==0)
+		
+		if(strcmp(child->next_sibling->name, "FunDec")==0)
 		{
+			Type type = Specifier(child);
+			child = child->next_sibling;	//ExtDefList/SEMI/FunDec
 			if(strcmp(child->next_sibling->name,"CompSt")==0)	//Fun Definition
 			{
 				fdefpt func = FunDec(child, type);
@@ -180,10 +180,15 @@ void dfs(tree* root, int space)
 				//fun declaration
 			}
 		}
-		else if(strcmp(child->name, "SEMI")==0)
+		else if(strcmp(child->next_sibling->name, "SEMI")==0)
 		{
+			//it may occur to be int; but this is not wrong.
+			//we do not consider it
+			//just assume this is the structure definition
+			
+			//insert structure
 		}
-		else if(strcmp(child->name, "ExtDecList")==0)
+		else if(strcmp(child->next_sibling->name, "ExtDecList")==0)
 		{
 		}
 	}
