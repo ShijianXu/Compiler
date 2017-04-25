@@ -62,7 +62,7 @@ void VarDec(tree *root, Type pre_type, struct Param* para)
 
 		Type type = (Type)malloc(sizeof(struct Type_));
 		type->kind = ARRAY;
-		type->array.size=atoi(child->next_sibling->next_sibling->name);
+		type->array.size=atoi(child->next_sibling->next_sibling->value);
 		type->array.elem = para->type;
 		para->type = type;
 
@@ -102,13 +102,13 @@ void VarList(tree* root, fdefpt fun)
 {
 	//VarList : ParamDec COMMA VarList | ParamDec
 	assert(strcmp(root->name, "VarList")==0);
-	if(root->child_num == 1)	//this function has only one parameter
+	if(root->child_num == 1)
 	{
 		tree* child = root->first_child; //ParamDec
 		ParamDec(child, fun);
 		return;
 	}
-	else if(root->child_num == 3)	//this function has more than one para
+	else if(root->child_num == 3)
 	{
 		tree* child = root->first_child;
 		ParamDec(child, fun);
@@ -262,32 +262,28 @@ void check_functable()
 				//specifier 只有基本类型和结构体，然函数不会返回结构体
 				printf("return type: %d\n", p->return_type);
 				printf("param num: %d\n", p->para_num);
-				printf("params are:\n");
-				struct Param* pp = p->para_list;
-				while(pp!=NULL)
+				if(p->para_num != 0)
 				{
-					printf("	para_name: %s;", pp->name);
-					
-					Type tp = pp->type;
-					printf("param type: %d\n", tp->kind);
-					switch(tp->kind)
+					printf("params are:\n");
+					struct Param* pp = p->para_list;
+					while(pp!=NULL)
 					{
-						case 2:
+						printf("	para_name: %s;", pp->name);
+						
+						Type tp = pp->type;
+						printf("param type: %d\n", tp->kind);
+						while(tp->kind != BASIC)
 						{
-							Type ty = tp->array.elem;
-							while(ty!=NULL)
-							{
-								printf("		array size: %d\n", ty->array.size);
-								ty= ty->array.elem;
-							}
-							break;
+							printf("		array_size: %d\n", tp->array.size);
+							tp=tp->array.elem;
 						}
+						if(tp->kind == BASIC)
+						{
+							printf("		the para's basic type is %d\n", tp->kind);
+						}
+						pp = pp->next_para;
 					}
-
-					pp = pp->next_para;
 				}
-
-
 				p=p->next;
 			}
 		}

@@ -1,7 +1,11 @@
-int main(int a, float b[10][3])
+int main(int a[500][14][10][30], float b[10][3])
 {
 }
 
-float func(int c[3])
+float func(float bb)
+{
+}
+
+int main()
 {
 }
