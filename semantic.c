@@ -150,6 +150,24 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	}
 }
 
+void Def(spt stpt, tree* root)
+{
+	//every Def means a definition, like: int a; or: float a,b;
+	//these var needs to be added into the stucture;	
+}
+
+void DefList(spt stpt, tree* root)
+{
+	if(root->child_num == 0)	//empty
+		return;
+	assert(root->child_num == 2);	//Def DefList
+	tree* child = root->first_child;
+	Def(stpt, root);
+
+	child = child->next_sibling;
+	DefList(stpt, child);
+}
+
 spt StructSpecifier(Type type, tree* root)
 {
 	assert(strcmp(root->name, "StructSpecifier")==0);
@@ -161,6 +179,7 @@ spt StructSpecifier(Type type, tree* root)
 		//structure declaration
 		stpt->kind = Declaration;
 		tree* child = root->first_child->next_sibling->first_child;
+		printf("struct name is %s\n", child->value);
 		strcpy(stpt->name, child->value);
 		return stpt;
 	}
@@ -171,18 +190,16 @@ spt StructSpecifier(Type type, tree* root)
 		stpt->kind = Definition;
 
 		tree* child = root->first_child->next_sibling;//OptTag
+		
 		if(child->child_num !=0)
 		{
 			assert(child->child_num == 1);	//OptTag
 			strcpy(stpt->name, child->first_child->value);
 		}
-		child = root->next_sibling->next_sibling;//DefList
-		//
-
+		child = child->next_sibling->next_sibling;//DefList
+		DefList(stpt, child);
+		return stpt;
 	}
-
-
-	return stpt;
 }
 
 void dfs(tree* root, int space)

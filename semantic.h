@@ -95,5 +95,7 @@ void ParamDec(tree* root, fdefpt fun);
 void VarDec(tree* root, Type pre_type, struct Param* para);
 Type Specifier(tree* root);
 void check_functable();
+spt StructSpecifier(Type type, tree* root);
+void DefList(spt stpt, tree* root);
 
 #endif
