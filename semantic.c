@@ -160,17 +160,43 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	}
 }
 
+void Dec(Type type, tree* root)
+{
+	//Dec() should insert the var into symbol table
+	if(root->child_num == 1)
+	{
+		//no assign
+		tree* child = root->first_child;
+		child->type = type;
+		VarDec(child);
+		//TODO
+	}
+	else
+	{
+		//Dec-->VarDec ASSIGNOP Exp
+		//TODO
+	}
+}
+
 void DecList(Type type, tree* root)
 {
 	if(root->child_num == 1)
 	{
 		//one var
-		//TODO
+		tree* child = root->first_child;//Dec
+
+		if(root->structdef == 1)
+			child->structdef = 1;
+		Dec(type, child);		
 	}
 	else
 	{
 		//more than one var
-		//TODO
+		tree* child = root->first_child;//Dec
+		Dec(type, child);
+		
+		child = child->next_sibling->next_sibling; //DecList
+		DecList(type, child);
 	}
 }
 
@@ -187,15 +213,15 @@ void Def(tree* root)
 
 		Type type = (Type)malloc(sizeof(struct Type_));
 		type = Specifier(child);
-//TODO	
-
+		
+		DecList(type, child);
 	}
 	else
 	{
 		//this is not in structure
 		//then all the vardec should be inserted into symbol table
 		Type type = (Type)malloc(sizeof(struct Type_));	//the type of var
-		child = root->first_child; //Specifier
+		tree* child = root->first_child; //Specifier
 		type = Specifier(child);
 		
 		child = child->next_sibling;	//DecList
@@ -229,7 +255,7 @@ void DefList(tree* root)
 		//the definition of vars in function
 		tree* child = root->first_child;	//Def
 		Def(child);
-		tree* child = child->next_sibling;	//DefList
+		child = child->next_sibling;	//DefList
 		DefList(child);
 	}
 }

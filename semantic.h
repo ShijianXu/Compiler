@@ -122,5 +122,6 @@ void DefList(tree* root);
 void Def(tree* node);
 void CompSt(tree* root);
 void DecList(Type type, tree* root);
+void Dec(Type type, tree* root);
 
 #endif
