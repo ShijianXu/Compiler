@@ -1,14 +1,4 @@
-int main()
+struct
 {
-}
-float main(float c, int a[10], float b[100][10])
-{
-}
-
-
-struct Position
-{
-	float x,y;
-	int a,b;
-	int a[10];
+	int a[10][10];
 };

@@ -1,0 +1,3 @@
+Currently, structure supports both declaration and definition.
+But, function supports only definition.
+Later, maybe I will support function declaration.

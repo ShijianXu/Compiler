@@ -31,7 +31,8 @@ Type Specifier(tree* root)
 	}
 	else if(strcmp(root->first_child->name, "StructSpecifier")==0)
 	{
-		;
+		type->kind = STRUCTURE;
+		return type;
 	}
 	else
 	{
@@ -149,6 +150,26 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	}
 }
 
+spt StructSpecifier(Type type, tree* root)
+{
+	assert(strcmp(root->name, "StructSpecifier")==0);
+	spt stpt = (spt)malloc(sizeof(struct StructTableNode));
+	//stpt->next will be set when inserted into struct table
+	stpt->type = type;
+	if(root->child_num == 2)
+	{
+		//structure declaration
+	}
+	else
+	{
+		assert(root->child_num == 5);
+		//structure definition
+	}
+
+
+	return stpt;
+}
+
 void dfs(tree* root, int space)
 {
 /*	if(root->empty == 0)
@@ -185,7 +206,8 @@ void dfs(tree* root, int space)
 			//it may occur to be int; but this is not wrong.
 			//we do not consider it
 			//just assume this is the structure definition
-			
+			Type type = Specifier(child);
+			spt structpt = StructSpecifier(type, child->first_child);
 			//insert structure
 		}
 		else if(strcmp(child->next_sibling->name, "ExtDecList")==0)
