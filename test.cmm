@@ -1,4 +1,6 @@
-struct
+struct b aa;
+
+struct a
 {
-	int a[10][10];
+	int a;
 };

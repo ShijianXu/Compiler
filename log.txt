@@ -1,3 +1,19 @@
+######
 Currently, structure supports both declaration and definition.
 But, function supports only definition.
 Later, maybe I will support function declaration.
+
+######
+when it comes to:
+ExtDef-->Specifier SEMI
+it can only be:
+	Specifier-->StructSpecifier
+	can not be: Specifier-->TYPE (since int; is meaningless)
+and it can only be:
+	StructSpecifier-->STRUCT OptTag LC DefList RC
+	can not be: StructSpecifier-->STRUCT Tag(ID), since struct a; is meaningiless
+
+#####
+StructSpecifier-->STRUCT Tag: a struct declaration, and must followed by a param
+StructSpecifier-->STRUCT OptTag LC DefList RC: a struct definition
+

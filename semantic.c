@@ -159,11 +159,26 @@ spt StructSpecifier(Type type, tree* root)
 	if(root->child_num == 2)
 	{
 		//structure declaration
+		stpt->kind = Declaration;
+		tree* child = root->first_child->next_sibling->first_child;
+		strcpy(stpt->name, child->value);
+		return stpt;
 	}
 	else
 	{
 		assert(root->child_num == 5);
 		//structure definition
+		stpt->kind = Definition;
+
+		tree* child = root->first_child->next_sibling;//OptTag
+		if(child->child_num !=0)
+		{
+			assert(child->child_num == 1);	//OptTag
+			strcpy(stpt->name, child->first_child->value);
+		}
+		child = root->next_sibling->next_sibling;//DefList
+		//
+
 	}
 
 

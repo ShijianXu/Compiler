@@ -15,6 +15,7 @@ enum basic_type { INT_, FLOAT_};
 struct StructTableNode
 {
 	char name[40];	//结构体名
+	enum {Definition, Declaration} kind;
 	Type type;
 	spt next;
 };
