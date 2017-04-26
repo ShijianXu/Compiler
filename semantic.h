@@ -24,7 +24,7 @@ typedef struct node
 
 	//##################
 	//用于标示当前处理的是什么地方的变量
-	enum {GLO_VAR, FUN_DEF, STR_DEF } node_kind;
+	enum {GLO_VAR, FUN_DEC, FUN_BODY, STR_DEF } node_kind;
 	char struct_name[40];	//当一个变量的类型为结构体时有用
 
 	//标示变量的作用域，同一作用域内的变量scope值相同
@@ -77,8 +77,10 @@ struct FuncDefTableNode
 
 struct SymTableNode
 {
+	int lineno;
 	char name[40];
 	Type type;
+	char struct_name[40];
 	int scope;	//每一个作用域对应一个整数，相应的，该作用域下的符号需要记录自己的作用域
 	sympt next;	//串联hash到同一个槽的符号
 	sympt scope_next;	//串联同一作用域的符号
@@ -103,7 +105,7 @@ struct Type_
 
 struct FieldList_
 {
-	char *name;
+	char name[40];
 	Type type;		//type指针
 	FieldList next;	//next指针,一个结构体中会有很多元素，一个元素就是一个field
 };
@@ -126,12 +128,14 @@ void VarList(tree* root, fdefpt fun);
 void ParamDec(tree* root, fdefpt fun);
 void VarDec(tree* root);
 Type Specifier(tree* root);
+void check_symtable();
 void check_functable();
-spt StructSpecifier(tree* root);
+void StructSpecifier(tree* root);
 void DefList(tree* root);
 void Def(tree* node);
 void CompSt(tree* root);
 void DecList(Type type, tree* root);
 void Dec(Type type, tree* root);
+void ExtDecList(tree* root);
 
 #endif

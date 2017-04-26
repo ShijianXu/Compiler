@@ -46,6 +46,47 @@ Type Specifier(tree* root)
 
 void VarDec(tree *root)
 {
+	if(root->child_num == 1)
+	{
+		if(root->node_kind == GLO_VAR) //全局变量定义
+		{
+			sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
+			sym->next = NULL;
+			if(root->type->kind = BASIC)
+			{
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = root->type->kind;
+				sym->type = type;
+				tree* child = root->first_child;
+				strcpy(sym->name, child->value);
+				sym->lineno = child->line;
+
+				unsigned val = insert_symtable(sym);
+				printf("%d\n", val);
+			}
+			else if(root->type->kind = STRUCTURE)
+			{
+				strcpy(sym->struct_name, root->struct_name);
+
+			}
+		}
+		else if(root->node_kind == FUN_DEC)	//函数形参
+		{
+		}
+		else if(root->node_kind == FUN_BODY) //函数体内变量定义
+		{
+		}
+		else
+		{
+			printf("VarDec node type error!\n");
+		}
+	}
+	else
+	{
+		//root->child_num == 4,数组变量
+	}
+	/*
+	//root->node_kind == FUNDEC
 	if(root->para->type == NULL)
 	//this is the first call of VarDec
 	{
@@ -77,7 +118,7 @@ void VarDec(tree *root)
 		root->type = child->type;
 		root->para = child->para;
 		return;
-	}
+	}*/
 }
 
 void ParamDec(tree* root, fdefpt fun)
@@ -180,7 +221,7 @@ void Dec(Type type, tree* root)
 		//TODO
 	}
 }
-
+/*
 void DecList(Type type, tree* root)
 {
 	if(root->child_num == 1)
@@ -203,7 +244,8 @@ void DecList(Type type, tree* root)
 		DecList(type, child);
 	}
 }
-
+*/
+/*
 void Def(tree* root)
 {
 	//every Def means a definition, like: int a; or: float a,b;
@@ -235,7 +277,9 @@ void Def(tree* root)
 		DecList(type, child);
 	}
 }
+*/
 
+/*
 void DefList(tree* root)
 {
 	if(root->child_num == 0)	//empty
@@ -265,8 +309,9 @@ void DefList(tree* root)
 		DefList(child);
 	}
 }
+*/
 
-spt StructSpecifier(tree* root)
+void StructSpecifier(tree* root)
 {
 	assert(strcmp(root->name, "StructSpecifier")==0);
 	if(root->child_num == 2)
@@ -279,6 +324,7 @@ spt StructSpecifier(tree* root)
 	}
 	else
 	{
+		/*
 		assert(root->child_num == 5);
 		//NOT FINISHED
 		//TODO
@@ -301,6 +347,7 @@ spt StructSpecifier(tree* root)
 		child->structdef = 1;
 		DefList(child);
 		return child->stpt;
+		*/
 	}
 }
 
@@ -308,9 +355,35 @@ void CompSt(tree* root)
 {
 	//all the var in CompSt should be inserted into symbol table
 	tree* child = root->first_child->next_sibling; //DefList
-	DefList(child);
+//	DefList(child);
 	//TODO
 	//child = child->next_sibling; //StmtList
+}
+
+void ExtDecList(tree* root)
+{
+	tree* child = root->first_child;
+	
+	child->node_kind = root->node_kind;
+	child->scope = root->scope;
+	child->type = root->type;
+	strcpy(child->struct_name, root->struct_name);
+
+	VarDec(child);
+
+	if(root->child_num == 1)
+		return;
+	else
+	{
+		child = child->next_sibling->next_sibling;
+		child->node_kind = root->node_kind;
+		child->scope = root->scope;
+		child->type = root->type;
+		strcpy(child->struct_name, root->struct_name);
+
+		ExtDecList(child);
+		return;
+	}
 }
 
 void dfs(tree* root, int space)
@@ -341,7 +414,7 @@ void dfs(tree* root, int space)
 			{
 				//StructSpecifier()
 				tree* grandchild = child->first_child; //StructSpecifier
-				grandchild->node_kind = root->kind;
+				grandchild->node_kind = root->node_kind;
 				grandchild->scope = root->scope;
 
 				StructSpecifier(grandchild);
@@ -358,7 +431,7 @@ void dfs(tree* root, int space)
 
 			//ExtDecList中调用VarDec(),每次判断node_kind，插入符号表
 			//ExtDecList(child)
-			//TODO
+			ExtDecList(child);
 		}
 		else if(strcmp(child->name, "SEMI")==0)
 		{
@@ -378,7 +451,7 @@ void dfs(tree* root, int space)
 		}
 		else if(strcmp(child->name, "FunDec")==0)
 		{
-			root->node_kind = FUN_DEF;
+			root->node_kind = FUN_DEC;
 			root->scope = scope;
 			scope+=1;
 
@@ -403,7 +476,8 @@ void dfs(tree* root, int space)
 			//FunDec(child)
 			
 			child = child->next_sibling; //CompSt
-			child->node_kind = root->node_kind;
+			//CompSt只会出现在函数体中
+			child->node_kind = FUN_BODY;
 			child->scope = root->scope;
 			//root->type就不需要了，内部的变量有自己的type
 			
@@ -421,7 +495,8 @@ void semantic_check(tree *root)
 	init_hash_head();
 	printf("checking\n");
 	dfs(root, 0);
-	check_functable();
+	//check_functable();
+	check_symtable();
 	printf("\n\n");
 }
 
@@ -517,6 +592,17 @@ int insert_symtable(sympt node)
 	unsigned index = hash(node->name);
 	//printf("%d\n", index);
 
+	sympt pt = symHashHead[index];
+	while(pt!=NULL)
+	{
+		if(strcmp(node->name, pt->name)==0)
+		{
+			printf("Error type 3 at Line %d: Redefined variable \"%s\"\n",node->lineno, node->name);
+			return -1;
+		}
+		pt=pt->next;
+	}
+
 	if(symHashHead[index] == NULL)
 	{
 		symHashHead[index] = node;
@@ -528,5 +614,26 @@ int insert_symtable(sympt node)
 		node->next = symHashHead[index];
 		symHashHead[index] = node;
 		return 1;
+	}
+}
+
+void check_symtable()
+{
+	for(int i=0; i<hash_size; i++)
+	{
+		if(symHashHead[i]!=NULL)
+		{
+			sympt pt = symHashHead[i];
+			while(pt!=NULL)
+			{
+				if(pt->type->kind = BASIC)
+					printf("sym type: %d  ", pt->type->basic);
+				else if(pt->type->kind = STRUCTURE)
+				{
+				}
+				printf("sym name: %s\n",pt->name);
+				pt = pt->next;
+			}
+		}
 	}
 }
