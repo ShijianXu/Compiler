@@ -23,8 +23,18 @@ typedef struct node
 	struct node *first_child, *next_sibling;
 
 	//##################
-	int structdef;
+	//用于标示当前处理的是什么地方的变量
+	enum {GLO_VAR, FUN_DEF, STR_DEF } node_kind;
+	char struct_name[40];	//当一个变量的类型为结构体时有用
+
+	//标示变量的作用域，同一作用域内的变量scope值相同
+	int scope;
+
+	//
 	Type type;
+
+
+	sympt syms;
 	struct Param* para;
 	spt stpt;
 }tree;
@@ -117,7 +127,7 @@ void ParamDec(tree* root, fdefpt fun);
 void VarDec(tree* root);
 Type Specifier(tree* root);
 void check_functable();
-spt StructSpecifier(Type type, tree* root);
+spt StructSpecifier(tree* root);
 void DefList(tree* root);
 void Def(tree* node);
 void CompSt(tree* root);

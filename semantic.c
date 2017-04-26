@@ -5,6 +5,9 @@
 #include <assert.h>
 #include "semantic.h"
 
+int scope = 0;
+
+
 Type Specifier(tree* root)
 {
 	Type type = (Type)malloc(sizeof(struct Type_));
@@ -184,13 +187,14 @@ void DecList(Type type, tree* root)
 	{
 		//one var
 		tree* child = root->first_child;//Dec
-
+		//TODO
 		if(root->structdef == 1)
 			child->structdef = 1;
 		Dec(type, child);		
 	}
 	else
 	{
+		//TODO
 		//more than one var
 		tree* child = root->first_child;//Dec
 		Dec(type, child);
@@ -215,6 +219,8 @@ void Def(tree* root)
 		type = Specifier(child);
 		
 		DecList(type, child);
+
+		root->stpt = child->stpt;
 	}
 	else
 	{
@@ -260,24 +266,26 @@ void DefList(tree* root)
 	}
 }
 
-spt StructSpecifier(Type type, tree* root)
+spt StructSpecifier(tree* root)
 {
 	assert(strcmp(root->name, "StructSpecifier")==0);
-	spt stpt = (spt)malloc(sizeof(struct StructTableNode));
-	//stpt->next will be set when inserted into struct table
-	stpt->type = type;
 	if(root->child_num == 2)
 	{
 		//structure declaration
-		stpt->kind = Declaration;
 		tree* child = root->first_child->next_sibling->first_child;
 		printf("struct name is %s\n", child->value);
-		strcpy(stpt->name, child->value);
-		return stpt;
+		strcpy(root->struct_name, child->value);
+		return;
 	}
 	else
 	{
 		assert(root->child_num == 5);
+		//NOT FINISHED
+		//TODO
+		spt stpt = (spt)malloc(sizeof(struct StructTableNode));
+		//stpt->next will be set when inserted into struct table
+		stpt->type = type;
+
 		//structure definition
 		stpt->kind = Definition;
 
@@ -307,47 +315,101 @@ void CompSt(tree* root)
 
 void dfs(tree* root, int space)
 {
-/*	if(root->empty == 0)
-	{
-		for(int i=0; i<space; i++)
-			printf(" ");
-		printf("%s\n", root->name);
-	}
-*/
-
 	if(strcmp(root->name, "ExtDef")==0)
 	{
-		tree *child;
-		child = root->first_child;	//Specifier
+		//每个ExtDef意味着一个结构体、函数或全局变量的定义
+		//C--程序只由这三部分组成
+		tree* child;
+		child = root->first_child->next_sibling;
+		//child == ExtDecList/SEMI/FunDec
+		if(strcmp(child->name, "ExtDecList")==0)
+		{
+			root->node_kind = GLO_VAR;
+			root->scope = scope;
+			scope+=1;
+
+			child = root->first_child; //Specifier
+			child->node_kind = root->node_kind;
+			child->scope = root->scope;
+			Type type = Specifier(child);
 		
-		if(strcmp(child->next_sibling->name, "FunDec")==0)
+			//type如果是int,float，标示全局变量类型为int,float
+			//type如果是struct，表示全局变量是个结构体类型，
+			//需要进一步访问StructSpecifier来确定结构体类型名
+			//这时的产生式为StructSpecifier-->STRUCT Tag
+			if(type->kind == STRUCTURE)
+			{
+				//StructSpecifier()
+				tree* grandchild = child->first_child; //StructSpecifier
+				grandchild->node_kind = root->kind;
+				grandchild->scope = root->scope;
+
+				StructSpecifier(grandchild);
+				strcpy(root->struct_name, grandchild->struct_name);
+			}
+			root->type = type;
+
+			child = child->next_sibling; //ExtDecList
+			child->node_kind = root->node_kind;
+			child->scope = root->scope;
+			strcpy(child->struct_name, root->struct_name);
+
+			child->type = root->type;
+
+			//ExtDecList中调用VarDec(),每次判断node_kind，插入符号表
+			//ExtDecList(child)
+			//TODO
+		}
+		else if(strcmp(child->name, "SEMI")==0)
 		{
+			root->node_kind = STR_DEF;
+			root->scope = scope;
+			scope+=1;
+			
+			child = root->first_child; //Specifier
+			child->node_kind = root->node_kind;
+			child->scope = root->scope;
+			//Type type = Specifier(child);
+			//因为知道是结构体定义，所以无需访问Specifier()
+			//要继续访问StructSpecifier()获取结构体具体内容
+			//这时的产生式为StructSpecifier-->STRUCT OptTag LC DefList RC
+			//TODO
+			//将结构体定义插入结构体表
+		}
+		else if(strcmp(child->name, "FunDec")==0)
+		{
+			root->node_kind = FUN_DEF;
+			root->scope = scope;
+			scope+=1;
+
+			child = root->first_child; //Specifier
+			child->node_kind = root->node_kind;
+			child->scope = root->scope;
 			Type type = Specifier(child);
-			child = child->next_sibling;	//ExtDefList/SEMI/FunDec
 			
-			fdefpt func = FunDec(child, type);
-			//insert into function table
-			int ret_val = insert_funcDefTable(func);
-			printf("%d\n", ret_val);
+			//type标示了函数返回值
+			//应该只是int或float
+			//需要放入函数的return_type中去
+			//TODO
+			root->type = type;
 			
-			//the statements in the function
+			child = child->next_sibling; //FunDec
+			child->node_kind = root->node_kind;
+			child->scope = root->scope;
+			
+			child->type = root->type;
+
+			//FunDec返回之后，将child里记录的函数定义插入函数表和符号表
+			//FunDec(child)
+			
 			child = child->next_sibling; //CompSt
-			CompSt(child);
-		}
-		else if(strcmp(child->next_sibling->name, "SEMI")==0)
-		{
-			//It may occur to be 'int;' and this is not wrong.
-			//But we do not consider it
-			//Just assume this is only the structure definition
-			Type type = Specifier(child);
-			spt structpt = StructSpecifier(type, child->first_child);
-			//insert structure
-		}
-		else if(strcmp(child->next_sibling->name, "ExtDecList")==0)
-		{
+			child->node_kind = root->node_kind;
+			child->scope = root->scope;
+			//root->type就不需要了，内部的变量有自己的type
+			
+			//CompSt(child)
 		}
 	}
-	
 	if(root->first_child != NULL)
 		dfs(root->first_child, space+2);
 	if(root->next_sibling != NULL)
