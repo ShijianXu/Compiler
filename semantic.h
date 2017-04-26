@@ -32,9 +32,9 @@ typedef struct node
 
 	//
 	Type type;
-
-
 	sympt syms;
+
+
 	struct Param* para;
 	spt stpt;
 }tree;

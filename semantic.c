@@ -50,30 +50,40 @@ void VarDec(tree *root)
 	{
 		if(root->node_kind == GLO_VAR) //全局变量定义
 		{
-			sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
-			sym->next = NULL;
-			if(root->type->kind = BASIC)
+			root->syms->next = NULL;
+			if(root->type->kind == BASIC)
 			{
 				Type type = (Type)malloc(sizeof(struct Type_));
 				type->kind = root->type->kind;
-				sym->type = type;
+				root->syms->type = type;
 				tree* child = root->first_child;
-				strcpy(sym->name, child->value);
-				sym->lineno = child->line;
+				strcpy(root->syms->name, child->value);
+				root->syms->lineno = child->line;
 
-				unsigned val = insert_symtable(sym);
+				unsigned val = insert_symtable(root->syms);
 				printf("%d\n", val);
 			}
-			else if(root->type->kind = STRUCTURE)
+			else if(root->type->kind == STRUCTURE)
 			{
-				strcpy(sym->struct_name, root->struct_name);
-
+				strcpy(root->syms->struct_name, root->struct_name);
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = root->type->kind;
+				root->syms->type = type;
+				tree* child = root->first_child;
+				strcpy(root->syms->name, child->value);
+				root->syms->lineno = child->line;
+			
+				unsigned val = insert_symtable(root->syms);
+				printf("%d\n", val);
 			}
 		}
 		else if(root->node_kind == FUN_DEC)	//函数形参
 		{
 		}
 		else if(root->node_kind == FUN_BODY) //函数体内变量定义
+		{
+		}
+		else if(root->node_kind == STR_DEF)
 		{
 		}
 		else
@@ -84,6 +94,21 @@ void VarDec(tree *root)
 	else
 	{
 		//root->child_num == 4,数组变量
+		if(root->node_kind == GLO_VAR)
+		{
+			//TODO
+			//TODO
+			//TODO
+		}
+		else if(root->node_kind == FUN_DEC)
+		{
+		}
+		else if(root->node_kind == FUN_BODY)
+		{
+		}
+		else if(root->node_kind == STR_DEF)
+		{
+		}
 	}
 	/*
 	//root->node_kind == FUNDEC
@@ -368,7 +393,9 @@ void ExtDecList(tree* root)
 	child->scope = root->scope;
 	child->type = root->type;
 	strcpy(child->struct_name, root->struct_name);
-
+	
+	sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
+	child->syms = sym;
 	VarDec(child);
 
 	if(root->child_num == 1)
@@ -626,10 +653,11 @@ void check_symtable()
 			sympt pt = symHashHead[i];
 			while(pt!=NULL)
 			{
-				if(pt->type->kind = BASIC)
+				if(pt->type->kind == BASIC)
 					printf("sym type: %d  ", pt->type->basic);
 				else if(pt->type->kind = STRUCTURE)
 				{
+					printf("sym type: struct %s  ", pt->struct_name);
 				}
 				printf("sym name: %s\n",pt->name);
 				pt = pt->next;

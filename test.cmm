@@ -2,3 +2,7 @@ int a;
 float b;
 float a;
 float a;
+
+struct b aa;
+
+int c[10][3];
