@@ -75,6 +75,24 @@ void VarDec(tree *root)
 		}
 		else if(root->node_kind == FUN_DEC)
 		{
+			if(root->firstCallVarDec == 1)
+			{
+				struct Param* para = (struct Param*)malloc(sizeof(struct Param));
+				tree* child = root->first_child;
+				strcpy(para->name, child->value);
+				if(root->type->kind == STRUCTURE)
+					strcpy(para->struct_name, root->struct_name);
+				para->type = root->type;
+				//para->lineno = child->line;
+				return;
+			}
+			else
+			{
+				tree* child = root->first_child;
+				strcpy(root->para->name, child->value);
+				//root->para->lineno = child->line;
+				return;
+			}
 		}
 		else if(root->node_kind == STR_DEF)
 		{
@@ -121,6 +139,38 @@ void VarDec(tree *root)
 		}
 		else if(root->node_kind == FUN_DEC)
 		{
+			if(root->firstCallVarDec == 1)
+			{
+				struct Param* para = (struct Param*)malloc(sizeof(struct Param));
+				para->type = root->type;
+				if(root->type->kind == STRUCTURE)
+					strcpy(para->struct_name, root->struct_name);
+				tree* child = root->first_child;
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = ARRAY;
+				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				type->array.elem = para->type;
+				para->type = type;
+				child->para = para;
+				child->firstCallVarDec = 0;
+				child->node_kind = root->node_kind;
+				VarDec(child);
+				root->para = child->para;
+			}
+			else
+			{
+				tree* child = root->first_child;
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = ARRAY;
+				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				type->array.elem = root->para->type;
+				root->para->type = type;
+				child->para = root->para;
+				child->firstCallVarDec = 0;
+				child->node_kind = root->node_kind;
+				VarDec(child);
+				root->para = child->para;
+			}
 		}
 		else if(root->node_kind == STR_DEF)
 		{
@@ -128,65 +178,73 @@ void VarDec(tree *root)
 	}
 }
 
-void ParamDec(tree* root, fdefpt fun)
+void ParamDec(tree* root)
 {
 	//每个ParamDec定义一个形参
 	assert(strcmp(root->name, "ParamDec")==0);
-	//malloc a param object
-	struct Param* para = (struct Param*)malloc(sizeof(struct Param));
-	para->type = NULL;
 
 	tree* child = root->first_child; //Specifier
-	Type type = Specifier(child);	//形参基本类型，但有可能是 数组
+	Type type = Specifier(child);	//basic, strcut, 但有可能是数组
+	if(type->kind == STRUCTURE)
+	{
+		//StructSpecifier()
+		tree* grandchild = child->first_child; //StructSpecifier
+		grandchild->node_kind = root->node_kind;
+		grandchild->scope = root->scope;
 
+		StructSpecifier(grandchild);
+		strcpy(root->struct_name, grandchild->struct_name);
+	}
 	child = child->next_sibling;	//VarDec, include name, type(int or int[10])
-	
 	child->type = type;
-	child->para = para;
+	child->node_kind = root->node_kind;
+	child->firstCallVarDec = 1;
+	strcpy(child->struct_name, root->struct_name);
 	VarDec(child);
 
 	struct Param* para2 = child->para;
 
-	fun->para_num += 1;
-	if(fun->para_list == NULL)
+	root->func->para_num += 1;
+	if(root->func->para_list == NULL)
 	{
-		fun->para_list = para2;
+		root->func->para_list = para2;
 		para2->next_para = NULL;
 	}
 	else
 	{
-		para2->next_para = fun->para_list;
-		fun->para_list = para2;
+		para2->next_para = root->func->para_list;
+		root->func->para_list = para2;
 	}
 }
 
-void VarList(tree* root, fdefpt fun)
+void VarList(tree* root)
 {
 	//VarList : ParamDec COMMA VarList | ParamDec
 	assert(strcmp(root->name, "VarList")==0);
-	if(root->child_num == 1)
-	{
-		tree* child = root->first_child; //ParamDec
-		ParamDec(child, fun);
-		return;
-	}
-	else if(root->child_num == 3)
-	{
-		tree* child = root->first_child;
-		ParamDec(child, fun);
+	tree* child = root->first_child;
+	child->func = root->func;
+	child->node_kind = root->node_kind;
+	ParamDec(child);
+	root->func = child->func;
 
+	if(root->child_num == 1)
+		return;
+	else
+	{
+		//root->child_num == 3
 		child = child->next_sibling->next_sibling;//Another VarList
-		VarList(child, fun);
+		child->func = root->func;
+		child->node_kind = root->node_kind;
+		VarList(child);
 		return;
 	}
 }
 
-fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
+void FunDec(tree *root)//root->type记录函数返回值
 {
-	//malloc an object
 	fdefpt fun = (fdefpt)malloc(sizeof(struct FuncDefTableNode));
 	//some simplification: the reture type of function can only be INT OR FLOAT
-	fun->return_type = type_->basic;//return_type
+	fun->return_type = root->type->basic;//return_type
 	fun->para_num = 0;
 	//extract the name, paramlist of the function
 	tree *child = root->first_child;
@@ -197,17 +255,23 @@ fdefpt FunDec(tree *root, Type type_)//type_ 函数返回值类型
 	{
 		fun->para_num = 0;
 		fun->para_list = NULL;
-		return fun;
+		fun->lineno = child->line;
+		unsigned val = insert_funcDefTable(fun);
+		printf("insert fun return %d\n", val);
 	}
 	else if(strcmp(child->name,"VarList")==0)//param list
 	{
-		VarList(child, fun);
-		return fun;
+		child->node_kind = root->node_kind;
+		child->func = fun;
+		VarList(child);
+
+		unsigned val = insert_funcDefTable(child->func);
+		printf("insert fun return %d\n", val);
 	}
 	else
 	{
 		printf("FunDec has no other gen.\n");
-		return NULL;
+		return;
 	}
 }
 
@@ -464,25 +528,21 @@ void dfs(tree* root, int space)
 			scope+=1;
 
 			child = root->first_child; //Specifier
-			child->node_kind = root->node_kind;
+			child->node_kind = FUN_DEC;
 			child->scope = root->scope;
 			Type type = Specifier(child);
 			
 			//type标示了函数返回值
 			//应该只是int或float
 			//需要放入函数的return_type中去
-			//TODO
-			root->type = type;
-			
+	
 			child = child->next_sibling; //FunDec
-			child->node_kind = root->node_kind;
+			child->type = type;	//函数返回值
+			child->node_kind = FUN_DEC;
 			child->scope = root->scope;
 			
-			child->type = root->type;
-
-			//FunDec返回之后，将child里记录的函数定义插入函数表和符号表
-			//FunDec(child)
-			
+			FunDec(child);
+			//-----------------------------
 			child = child->next_sibling; //CompSt
 			//CompSt只会出现在函数体中
 			child->node_kind = FUN_BODY;
@@ -539,6 +599,17 @@ int insert_funcDefTable(fdefpt node)
 	printf("This fucntion name is %s\n", node->name);
 	unsigned index = hash(node->name);
 	printf("%d\n", index);
+	
+	fdefpt pt = funcDefHashHead[index];
+	while(pt!=NULL)
+	{
+		if(strcmp(pt->name, node->name)==0)
+		{
+			printf("Error type 4 at Line %d: Redefined function \"%s\"\n",node->lineno,node->name);
+			return -1;
+		}
+		pt=pt->next;
+	}
 	if(funcDefHashHead[index]==NULL)
 	{
 		funcDefHashHead[index]=node;

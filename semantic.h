@@ -68,11 +68,13 @@ struct Param
 {
 	char name[40];
 	Type type;
+	char struct_name[40];
 	struct Param* next_para;
 };
 
 struct FuncDefTableNode
 {
+	int lineno;
 	char name[40];
 	enum basic_type return_type;
 	int para_num;
@@ -128,16 +130,16 @@ int insert_funcDefTable(fdefpt func);
 unsigned hash(char *name);
 
 void dfs(tree* root, int space);
-fdefpt FunDec(tree *root, Type type_);
-void VarList(tree* root, fdefpt fun);
-void ParamDec(tree* root, fdefpt fun);
+void FunDec(tree *root);
+void VarList(tree* root);
+void ParamDec(tree* root);
 void VarDec(tree* root);
 Type Specifier(tree* root);
 void check_symtable();
 void check_functable();
 void StructSpecifier(tree* root);
 void DefList(tree* root);
-void Def(tree* node);
+void Def(tree* root);
 void CompSt(tree* root);
 void DecList(Type type, tree* root);
 void Dec(Type type, tree* root);

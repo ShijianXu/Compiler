@@ -1,6 +1,10 @@
-int main()
+int main(int a)
 {
 	struct type_name a,b,c[10][2];
 	int aa,bb,cc[10][3][400];
 	float aaa,bbb,ccc[100][10];
+}
+
+float main2()
+{
 }
