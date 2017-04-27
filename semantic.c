@@ -48,102 +48,84 @@ void VarDec(tree *root)
 {
 	if(root->child_num == 1)
 	{
-		if(root->node_kind == GLO_VAR) //全局变量定义
+		if(root->node_kind == GLO_VAR || root->node_kind == FUN_BODY)
 		{
-			root->syms->next = NULL;
-			if(root->type->kind == BASIC)
+			if(root->firstCallVarDec == 1)
 			{
-				Type type = (Type)malloc(sizeof(struct Type_));
-				type->kind = root->type->kind;
-				root->syms->type = type;
+				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
 				tree* child = root->first_child;
-				strcpy(root->syms->name, child->value);
-				root->syms->lineno = child->line;
+				strcpy(sym->name, child->value);
+				if(root->type->kind == STRUCTURE)
+					strcpy(sym->struct_name, root->struct_name);
 
-				unsigned val = insert_symtable(root->syms);
-				printf("%d\n", val);
+				sym->type = root->type;
+				sym->lineno = child->line;
+				unsigned val = insert_symtable(sym);	
+				printf("insert return %d\n", val);
 			}
-			else if(root->type->kind == STRUCTURE)
+			else
 			{
-				strcpy(root->syms->struct_name, root->struct_name);
-				Type type = (Type)malloc(sizeof(struct Type_));
-				type->kind = root->type->kind;
-				root->syms->type = type;
+				//数组递归调用
 				tree* child = root->first_child;
 				strcpy(root->syms->name, child->value);
 				root->syms->lineno = child->line;
-			
 				unsigned val = insert_symtable(root->syms);
-				printf("%d\n", val);
+				printf("insert_return %d\n", val);
 			}
-		}
-		else if(root->node_kind == FUN_DEC)	//函数形参
-		{
-		}
-		else if(root->node_kind == FUN_BODY) //函数体内变量定义
-		{
-		}
-		else if(root->node_kind == STR_DEF)
-		{
-		}
-		else
-		{
-			printf("VarDec node type error!\n");
-		}
-	}
-	else
-	{
-		//root->child_num == 4,数组变量
-		if(root->node_kind == GLO_VAR)
-		{
-			//TODO
-			//TODO
-			//TODO
 		}
 		else if(root->node_kind == FUN_DEC)
 		{
 		}
-		else if(root->node_kind == FUN_BODY)
+		else if(root->node_kind == STR_DEF)
+		{
+		}
+	}
+	else
+	{
+		//root->child_num == 4
+		if(root->node_kind == GLO_VAR || root->node_kind == FUN_BODY)
+		{
+			if(root->firstCallVarDec == 1)
+			{
+				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
+				sym->type = root->type;
+				if(root->type->kind == STRUCTURE)
+					strcpy(sym->struct_name, root->struct_name);
+				
+				tree* child = root->first_child;
+
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = ARRAY;
+				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				type->array.elem = sym->type;
+				sym->type = type;
+				child->syms = sym;
+				child->firstCallVarDec = 0;
+				child->node_kind = root->node_kind;
+				VarDec(child);
+			}
+			else
+			{
+				tree* child = root->first_child;
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = ARRAY;
+				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				type->array.elem = root->syms->type;
+				root->syms->type = type;
+
+				child->syms = root->syms;
+				child->firstCallVarDec = 0;
+				child->node_kind = root->node_kind;
+				VarDec(child);
+			}
+		}
+		else if(root->node_kind == FUN_DEC)
 		{
 		}
 		else if(root->node_kind == STR_DEF)
 		{
 		}
 	}
-	/*
-	//root->node_kind == FUNDEC
-	if(root->para->type == NULL)
-	//this is the first call of VarDec
-	{
-		Type type = root->type;	//pre_type records what kind this array is
-		root->para->type = type;
-	}
-
-	if(root->child_num == 1)
-	{
-		tree* child = root->first_child;
-		strcpy(root->para->name, child->value);
-		return;
-	}
-	else
-	{
-		assert(root->child_num == 4);
-		tree* child = root->first_child;
-
-		Type type = (Type)malloc(sizeof(struct Type_));
-		type->kind = ARRAY;
-		type->array.size=atoi(child->next_sibling->next_sibling->value);
-		type->array.elem = root->para->type;
-		root->para->type = type;
-		
-		child->type = root->type;
-		child->para = root->para;
-		VarDec(child);
-
-		root->type = child->type;
-		root->para = child->para;
-		return;
-	}*/
 }
 
 void ParamDec(tree* root, fdefpt fun)
@@ -394,8 +376,7 @@ void ExtDecList(tree* root)
 	child->type = root->type;
 	strcpy(child->struct_name, root->struct_name);
 	
-	sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
-	child->syms = sym;
+	child->firstCallVarDec=1;
 	VarDec(child);
 
 	if(root->child_num == 1)
@@ -653,14 +634,23 @@ void check_symtable()
 			sympt pt = symHashHead[i];
 			while(pt!=NULL)
 			{
-				if(pt->type->kind == BASIC)
-					printf("sym type: %d  ", pt->type->basic);
-				else if(pt->type->kind = STRUCTURE)
+				printf("sym_name:%s  ", pt->name);
+
+				Type type = pt->type;
+				while(type->kind != BASIC && type->kind !=STRUCTURE)
 				{
-					printf("sym type: struct %s  ", pt->struct_name);
+					printf("size:%d  ", type->array.size);
+					type = type->array.elem;
 				}
-				printf("sym name: %s\n",pt->name);
-				pt = pt->next;
+				if(type->kind == BASIC)
+					printf("type:%d  ", type->basic);
+				else
+					printf("type:%d  ", type->kind);
+				if(type->kind == STRUCTURE)
+					printf("struct name is %s\n", pt->struct_name);
+				else
+					printf("\n");
+				pt=pt->next;
 			}
 		}
 	}

@@ -23,19 +23,24 @@ typedef struct node
 	struct node *first_child, *next_sibling;
 
 	//##################
+	int firstCallVarDec;
 	//用于标示当前处理的是什么地方的变量
 	enum {GLO_VAR, FUN_DEC, FUN_BODY, STR_DEF } node_kind;
 	char struct_name[40];	//当一个变量的类型为结构体时有用
-
+	
 	//标示变量的作用域，同一作用域内的变量scope值相同
 	int scope;
 
-	//
 	Type type;
+	//FUN_BODY GLO_VAR中变量
 	sympt syms;
-
-
+	
+	//FUN_DEC参数
+	fdefpt func;
+	//FUN_DEC中的某一个参数，之后插入func的参数链表中
 	struct Param* para;
+
+	//STR_DEF 中的变量
 	spt stpt;
 }tree;
 

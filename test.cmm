@@ -1,8 +1,6 @@
-int a;
-float b;
-float a;
-float a;
-
-struct b aa;
-
-int c[10][3];
+int main()
+{
+	struct type_name a,b,c[10][2];
+	int aa,bb,cc[10][3][400];
+	float aaa,bbb,ccc[100][10];
+}
