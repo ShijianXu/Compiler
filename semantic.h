@@ -106,7 +106,7 @@ struct Type_
 			int size; 	//数组维度
 		} array;	//数组类型信息
 
-		FieldList structure;	//结构体类型的信息是一个链表
+		FieldList structpt;	//结构体类型的信息是一个链表
 	};
 };
 
@@ -141,8 +141,8 @@ void StructSpecifier(tree* root);
 void DefList(tree* root);
 void Def(tree* root);
 void CompSt(tree* root);
-void DecList(Type type, tree* root);
-void Dec(Type type, tree* root);
+void DecList(tree* root);
+void Dec(tree* root);
 void ExtDecList(tree* root);
 
 #endif

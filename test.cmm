@@ -1,3 +1,8 @@
+int a, b[10][11];
+struct bb a[10];
+struct bb cc[10][11];
+struct bb dd;
+
 float main(int a[10][3], int c, float b[10][4][5])
 {
 	struct type_name a,b,c[10][2];

@@ -280,67 +280,112 @@ void FunDec(tree *root)//root->type记录函数返回值
 	}
 }
 
-void Dec(Type type, tree* root)
+void Dec(tree* root)
 {
-	//Dec() should insert the var into symbol table
-	if(root->child_num == 1)
+	if(root->node_kind == STR_DEF)
 	{
-		//no assign
 		tree* child = root->first_child;
-		child->type = type;
+		child->node_kind = root->node_kind;
+		child->type = root->type;
+		child->stpt = root->stpt;
+		strcpy(child->struct_name, root->struct_name);
+
 		VarDec(child);
-		//TODO
+
+		root->stpt = child->stpt;
+
+		if(root->child_num == 1)
+			return;
+		else
+		{
+			child = child->next_sibling->next_sibling; //Exp
+			//检查EXP赋值的类型是否和ROOT->type匹配
+			//不匹配则报错
+			return;
+		}
 	}
-	else
+	else if(root->node_kind == FUN_BODY)
 	{
-		//Dec-->VarDec ASSIGNOP Exp
-		//TODO
+
 	}
 }
-/*
-void DecList(Type type, tree* root)
+
+void DecList(tree* root)
 {
+	tree* child = root->first_child;//Dec
+	child->node_kind = root->node_kind;
+	child->stpt = root->stpt;
+	child->scope = root->scope;
+	strcpy(child->struct_name, root->struct_name);
+	child->type = root->type;
+
+	Dec(child);
+	
 	if(root->child_num == 1)
 	{
-		//one var
-		tree* child = root->first_child;//Dec
-		//TODO
-		if(root->structdef == 1)
-			child->structdef = 1;
-		Dec(type, child);		
+		if(root->node_kind == STR_DEF)
+		{
+			root->stpt = child->stpt;
+			return;
+		}
+		else if(root->node_kind == FUN_BODY)
+		{
+		}
 	}
 	else
 	{
-		//TODO
-		//more than one var
-		tree* child = root->first_child;//Dec
-		Dec(type, child);
-		
+		//root->child_num ==3
 		child = child->next_sibling->next_sibling; //DecList
-		DecList(type, child);
+		child->node_kind = root->node_kind;
+		child->scope = root->scope;
+		child->type = root->type;
+		child->stpt = root->stpt;
+		strcpy(child->struct_name, root->struct_name);
+		DecList(child);
+		
+		if(root->node_kind == STR_DEF)
+		{
+			root->stpt = child->stpt;
+			return;
+		}
+		else if(root->node_kind == FUN_BODY)
+		{
+		}
 	}
 }
-*/
-/*
+
 void Def(tree* root)
 {
-	//every Def means a definition, like: int a; or: float a,b;
-	//if root->structdef==1, vars needs to be added into the stucture
-	if(root->structdef == 1)
+	//每个DEF对应一组变量的定义: int a,b,c;
+	//只有在后续调用到Dec之后，才是一个变量的定义
+	if(root->node_kind == STR_DEF)
 	{
-		//root->stpt is the structure
-		tree* child = root->first_child;
-		child->structdef = root->structdef;
-		child->stpt = root->stpt;
-
+		tree* child = root->first_child;	//specifier
 		Type type = (Type)malloc(sizeof(struct Type_));
 		type = Specifier(child);
 		
-		DecList(type, child);
+		if(type->kind == STRUCTURE)
+		{
+			tree* grandchild=child->first_child; //StructSpecifier
+			grandchild->node_kind = root->node_kind;
+			grandchild->scope = root->scope;
+
+			StructSpecifier(grandchild);
+			strcpy(root->struct_name, grandchild->struct_name);
+		}
+		root->type = type;
+		
+		child = child->next_sibling; //DecList
+		child->node_kind = root->node_kind;
+		child->stpt = root->stpt;
+		strcpy(child->struct_name, root->struct_name);
+		child->type = root->type;
+
+		DecList(child);
 
 		root->stpt = child->stpt;
 	}
-	else
+	else if(root->node_kind == FUN_BODY)
 	{
 		//this is not in structure
 		//then all the vardec should be inserted into symbol table
@@ -353,30 +398,32 @@ void Def(tree* root)
 		DecList(type, child);
 	}
 }
-*/
 
-/*
 void DefList(tree* root)
 {
 	if(root->child_num == 0)	//empty
 		return;
-	assert(root->child_num == 2);	//Def DefList
-	
-	if(root->structdef == 1)
+
+	if(root->node_kind == STR_DEF)
 	{
 		//root->stpt is used;
 		tree* child = root->first_child;
-		Def(root);
-
-		child = child->next_sibling;
-		child->structdef =1;
+		child->node_kind = root->node_kind;
 		child->stpt = root->stpt;
+		child->scope = root->scope;
+
+		Def(child);
+		root->stpt = child->stpt;
+
+		child = child->next_sibling;//DefList
+		child->node_kind = root->node_kind;
+		child->stpt = root->stpt;
+		child->scope = root->scope;
 
 		DefList(child);
-
 		root->stpt = child->stpt;
 	}
-	else
+	else if(root->node_kind == FUN_BODY)
 	{
 		//the definition of vars in function
 		tree* child = root->first_child;	//Def
@@ -385,14 +432,14 @@ void DefList(tree* root)
 		DefList(child);
 	}
 }
-*/
+
 
 void StructSpecifier(tree* root)
 {
 	assert(strcmp(root->name, "StructSpecifier")==0);
 	if(root->child_num == 2)
 	{
-		//structure declaration
+		//structure object declaration
 		tree* child = root->first_child->next_sibling->first_child;
 		printf("struct name is %s\n", child->value);
 		strcpy(root->struct_name, child->value);
@@ -400,30 +447,27 @@ void StructSpecifier(tree* root)
 	}
 	else
 	{
-		/*
+		//struct definition
 		assert(root->child_num == 5);
-		//NOT FINISHED
-		//TODO
-		spt stpt = (spt)malloc(sizeof(struct StructTableNode));
-		//stpt->next will be set when inserted into struct table
-		stpt->type = type;
-
+	
 		//structure definition
-		stpt->kind = Definition;
+		root->stpt->kind = Definition;//root->node_kind = STR_DEF
 
 		tree* child = root->first_child->next_sibling;//OptTag
 		
 		if(child->child_num !=0)
 		{
 			assert(child->child_num == 1);	//OptTag
-			strcpy(stpt->name, child->first_child->value);
+			strcpy(root->stpt->name, child->first_child->value);
 		}
+
 		child = child->next_sibling->next_sibling;//DefList
-		child->stpt = stpt;
-		child->structdef = 1;
+		child->stpt = root->stpt;
+		child->node_kind = root->node_kind;//STR_DEF
+		child->scope = root->scope;
 		DefList(child);
-		return child->stpt;
-		*/
+		
+		root->stpt = child->stpt;
 	}
 }
 
@@ -516,15 +560,15 @@ void dfs(tree* root, int space)
 			root->scope = scope;
 			scope+=1;
 			
-			child = root->first_child; //Specifier
+			child=root->first_child->first_child;//StructSpecifier
 			child->node_kind = root->node_kind;
 			child->scope = root->scope;
-			//Type type = Specifier(child);
-			//因为知道是结构体定义，所以无需访问Specifier()
-			//要继续访问StructSpecifier()获取结构体具体内容
-			//这时的产生式为StructSpecifier-->STRUCT OptTag LC DefList RC
-			//TODO
-			//将结构体定义插入结构体表
+			
+			spt stpt = (spt)malloc(sizeof(struct StructTableNode));
+			child->stpt = stpt;
+			StructSpecifier(child);
+			//insert(child->stpt)
+
 		}
 		else if(strcmp(child->name, "FunDec")==0)
 		{
