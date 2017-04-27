@@ -84,6 +84,7 @@ void VarDec(tree *root)
 					strcpy(para->struct_name, root->struct_name);
 				para->type = root->type;
 				//para->lineno = child->line;
+				root->para = para;
 				return;
 			}
 			else
@@ -201,7 +202,6 @@ void ParamDec(tree* root)
 	child->firstCallVarDec = 1;
 	strcpy(child->struct_name, root->struct_name);
 	VarDec(child);
-
 	struct Param* para2 = child->para;
 
 	root->func->para_num += 1;
@@ -221,6 +221,7 @@ void VarList(tree* root)
 {
 	//VarList : ParamDec COMMA VarList | ParamDec
 	assert(strcmp(root->name, "VarList")==0);
+	
 	tree* child = root->first_child;
 	child->func = root->func;
 	child->node_kind = root->node_kind;
@@ -244,9 +245,9 @@ void FunDec(tree *root)//root->type记录函数返回值
 {
 	fdefpt fun = (fdefpt)malloc(sizeof(struct FuncDefTableNode));
 	//some simplification: the reture type of function can only be INT OR FLOAT
-	fun->return_type = root->type->basic;//return_type
+	fun->return_type = root->type->basic;//return_type, int/float
 	fun->para_num = 0;
-	//extract the name, paramlist of the function
+	
 	tree *child = root->first_child;
 	strcpy(fun->name, child->value);	//func id
 	
@@ -261,6 +262,10 @@ void FunDec(tree *root)//root->type记录函数返回值
 	}
 	else if(strcmp(child->name,"VarList")==0)//param list
 	{
+		fun->para_num = 0;
+		fun->para_list = NULL;
+		fun->lineno = child->line;
+
 		child->node_kind = root->node_kind;
 		child->func = fun;
 		VarList(child);
@@ -563,7 +568,7 @@ void semantic_check(tree *root)
 	init_hash_head();
 	printf("checking\n");
 	dfs(root, 0);
-	//check_functable();
+	check_functable();
 	check_symtable();
 	printf("\n\n");
 }
@@ -648,14 +653,18 @@ void check_functable()
 						
 						Type tp = pp->type;
 						printf("param type: %d\n", tp->kind);
-						while(tp->kind != BASIC)
+						while(tp->kind != BASIC && tp->kind != STRUCTURE)
 						{
 							printf("		array_size: %d\n", tp->array.size);
 							tp=tp->array.elem;
 						}
 						if(tp->kind == BASIC)
 						{
-							printf("		the para's basic type is %d\n", tp->kind);
+							printf("		the para's basic type is %d\n", tp->basic);
+						}
+						if(tp->kind == STRUCTURE)
+						{
+							printf("		the para's struct_type is %s\n", pp->struct_name);
 						}
 						pp = pp->next_para;
 					}
