@@ -42,6 +42,8 @@ typedef struct node
 
 	//STR_DEF 中的变量
 	spt stpt;
+	//fieldpt记录结构体的某一个域，之后插入结构体的filedList中
+	FieldList fieldpt;
 }tree;
 
 tree *insert(char *ch, int num, char *value, int lineno, ...);
@@ -78,7 +80,7 @@ struct FuncDefTableNode
 	char name[40];
 	enum basic_type return_type;
 	int para_num;
-	struct Param* para_list;	
+	struct Param* para_list;
 	fdefpt next;
 };
 
@@ -106,7 +108,7 @@ struct Type_
 			int size; 	//数组维度
 		} array;	//数组类型信息
 
-		FieldList structpt;	//结构体类型的信息是一个链表
+		FieldList fieldList;	//结构体类型的信息是一个链表
 	};
 };
 
