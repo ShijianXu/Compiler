@@ -55,7 +55,7 @@ struct StructTableNode
 {
 	char name[40];	//结构体名
 	enum {Definition, Declaration} kind;
-	Type type;
+	FieldList fieldList;
 	spt next;
 };
 
@@ -115,6 +115,7 @@ struct Type_
 struct FieldList_
 {
 	char name[40];
+	char struct_name[40];
 	Type type;		//type指针
 	FieldList next;	//next指针,一个结构体中会有很多元素，一个元素就是一个field
 };

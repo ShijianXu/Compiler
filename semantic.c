@@ -97,6 +97,11 @@ void VarDec(tree *root)
 		}
 		else if(root->node_kind == STR_DEF)
 		{
+			if(firstCallVarDec == 1)
+			{
+				FieldList field=(FieldList)malloc(sizeof(struct FieldList_));
+				//TODO TODO TODO
+			}
 		}
 	}
 	else
@@ -175,6 +180,7 @@ void VarDec(tree *root)
 		}
 		else if(root->node_kind == STR_DEF)
 		{
+			//TODO TODO TODO
 		}
 	}
 }
@@ -288,8 +294,9 @@ void Dec(tree* root)
 		child->node_kind = root->node_kind;
 		child->type = root->type;
 		child->stpt = root->stpt;
-		strcpy(child->struct_name, root->struct_name);
-
+		strcpy(child->struct_name, root->struct_name);	
+		child->firstCallVarDec = 1;
+		//每个VarDec NEW一个field对象
 		VarDec(child);
 
 		root->stpt = child->stpt;
@@ -330,6 +337,7 @@ void DecList(tree* root)
 		}
 		else if(root->node_kind == FUN_BODY)
 		{
+			return;
 		}
 	}
 	else
@@ -350,6 +358,7 @@ void DecList(tree* root)
 		}
 		else if(root->node_kind == FUN_BODY)
 		{
+			return;
 		}
 	}
 }
@@ -394,8 +403,8 @@ void Def(tree* root)
 		type = Specifier(child);
 		
 		child = child->next_sibling;	//DecList
-		
-		DecList(type, child);
+		child->type = type;	
+		DecList(child);
 	}
 }
 
@@ -447,12 +456,9 @@ void StructSpecifier(tree* root)
 	}
 	else
 	{
-		//struct definition
 		assert(root->child_num == 5);
 	
 		//structure definition
-		root->stpt->kind = Definition;//root->node_kind = STR_DEF
-
 		tree* child = root->first_child->next_sibling;//OptTag
 		
 		if(child->child_num !=0)
@@ -561,7 +567,7 @@ void dfs(tree* root, int space)
 			scope+=1;
 			
 			child=root->first_child->first_child;//StructSpecifier
-			child->node_kind = root->node_kind;
+			child->node_kind = root->node_kind;//STR_DEF
 			child->scope = root->scope;
 			
 			spt stpt = (spt)malloc(sizeof(struct StructTableNode));
