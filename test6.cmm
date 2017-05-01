@@ -1,5 +1,5 @@
 int main()
 {
 	int i;
-	i = 3.7;
+	10 = i;
 }

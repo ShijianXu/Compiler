@@ -61,7 +61,7 @@ void VarDec(tree *root)
 				sym->type = root->type;
 				sym->lineno = child->line;
 				unsigned val = insert_symtable(sym);	
-				printf("insert return %d\n", val);
+	//			printf("insert return %d\n", val);
 			}
 			else
 			{
@@ -78,8 +78,14 @@ void VarDec(tree *root)
 			if(root->firstCallVarDec == 1)
 			{
 				struct Param* para = (struct Param*)malloc(sizeof(struct Param));
+				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
 				tree* child = root->first_child;
 				strcpy(para->name, child->value);
+				
+				strcpy(sym->name, child->value);
+				sym->type = root->type;
+				insert_symtable(sym);
+
 				if(root->type->kind == STRUCTURE)
 					strcpy(para->struct_name, root->struct_name);
 				para->type = root->type;
@@ -97,10 +103,21 @@ void VarDec(tree *root)
 		}
 		else if(root->node_kind == STR_DEF)
 		{
-			if(firstCallVarDec == 1)
+			if(root->firstCallVarDec == 1)
 			{
 				FieldList field=(FieldList)malloc(sizeof(struct FieldList_));
-				//TODO TODO TODO
+				tree* child = root->first_child;
+				strcpy(field->name, child->value);
+				if(root->type->kind == STRUCTURE)
+					strcpy(field->struct_name, root->struct_name);
+				field->type = root->type;
+
+				root->field = field;
+			}
+			else
+			{
+				tree* child = root->first_child;
+				strcpy(root->field->name, child->value);
 			}
 		}
 	}
@@ -180,7 +197,38 @@ void VarDec(tree *root)
 		}
 		else if(root->node_kind == STR_DEF)
 		{
-			//TODO TODO TODO
+			if(root->firstCallVarDec == 1)
+			{
+				FieldList field = (FieldList)malloc(sizeof(struct FieldList_));
+				field->type = root->type;
+				if(root->type->kind == STRUCTURE)
+					strcpy(field->struct_name, root->struct_name);
+				tree* child = root->first_child;
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = ARRAY;
+				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				type->array.elem = field->type;
+				field->type = type;
+				child->field = field;
+				child->firstCallVarDec = 0;
+				child->node_kind = root->node_kind;
+				VarDec(child);
+				root->field = child->field;
+			}
+			else
+			{
+				tree* child = root->first_child;
+				Type type = (Type)malloc(sizeof(struct Type_));
+				type->kind = ARRAY;
+				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				type->array.elem = root->field->type;
+				root->field->type = type;
+				child->field = root->field;
+				child->firstCallVarDec = 0;
+				child->node_kind = root->node_kind;
+				VarDec(child);
+				root->field = child->field;
+			}
 		}
 	}
 }
@@ -264,7 +312,7 @@ void FunDec(tree *root)//root->type记录函数返回值
 		fun->para_list = NULL;
 		fun->lineno = child->line;
 		unsigned val = insert_funcDefTable(fun);
-		printf("insert fun return %d\n", val);
+//		printf("insert fun return %d\n", val);
 	}
 	else if(strcmp(child->name,"VarList")==0)//param list
 	{
@@ -277,7 +325,11 @@ void FunDec(tree *root)//root->type记录函数返回值
 		VarList(child);
 
 		unsigned val = insert_funcDefTable(child->func);
-		printf("insert fun return %d\n", val);
+	//	sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
+	//	strcpy(sym->name, child->func->name);
+	//	sym->type = child->func->return_type;
+
+//		printf("insert fun return %d\n", val);
 	}
 	else
 	{
@@ -298,22 +350,40 @@ void Dec(tree* root)
 		child->firstCallVarDec = 1;
 		//每个VarDec NEW一个field对象
 		VarDec(child);
-
+		
+		if(root->stpt->fieldList == NULL)
+		{
+			child->stpt->fieldList = child->field;
+			child->field->next = NULL;
+		}
+		else
+		{
+			child->field->next = child->stpt->fieldList;
+			child->stpt->fieldList = child->field;
+		}
+		
 		root->stpt = child->stpt;
+		return;
+	}
+	else if(root->node_kind == FUN_BODY)
+	{
+		tree* child = root->first_child;
+		child->node_kind = root->node_kind;
+		child->type = root->type;
+		strcpy(child->struct_name, root->struct_name);
+		child->firstCallVarDec = 1;
+		VarDec(child);
 
 		if(root->child_num == 1)
 			return;
 		else
 		{
+			//root->child_num == 3
+			//TODO TODO TODO
 			child = child->next_sibling->next_sibling; //Exp
-			//检查EXP赋值的类型是否和ROOT->type匹配
-			//不匹配则报错
-			return;
+			child->node_kind = root->node_kind;
+			
 		}
-	}
-	else if(root->node_kind == FUN_BODY)
-	{
-
 	}
 }
 
@@ -402,8 +472,22 @@ void Def(tree* root)
 		tree* child = root->first_child; //Specifier
 		type = Specifier(child);
 		
+		if(type->kind == STRUCTURE)
+		{
+			tree* grandchild=child->first_child; //StructSpecifier
+			grandchild->node_kind = root->node_kind;
+			grandchild->scope = root->scope;
+
+			StructSpecifier(grandchild);
+			strcpy(root->struct_name, grandchild->struct_name);
+		}
+		root->type = type;
+	
 		child = child->next_sibling;	//DecList
-		child->type = type;	
+		child->type = root->type;
+		child->node_kind = root->node_kind;
+		strcpy(child->struct_name, root->struct_name);
+		
 		DecList(child);
 	}
 }
@@ -436,8 +520,12 @@ void DefList(tree* root)
 	{
 		//the definition of vars in function
 		tree* child = root->first_child;	//Def
+		child->node_kind = root->node_kind;
+		child->return_type = root->return_type;
 		Def(child);
 		child = child->next_sibling;	//DefList
+		child->node_kind = root->node_kind;
+		child->return_type = root->return_type;
 		DefList(child);
 	}
 }
@@ -477,13 +565,171 @@ void StructSpecifier(tree* root)
 	}
 }
 
+void Exp(tree* root)
+{
+	if(root->child_num == 3)
+	{
+		tree* child = root->first_child->next_sibling;	//middle
+		if(strcmp(child->name, "ASSIGNOP")==0)
+		{
+			child = root->first_child;
+			Exp(child);
+			if(child->exp_type != _VAR)
+			{
+				printf("Error type 6 at Line %d: The left-hand side of an assignment must be a variable.\n", child->line);
+			}
+
+			tree* child2 = child->next_sibling;
+			Exp(child2);
+			if(child->exp_type == _VAR)
+			{
+				if(child->type->basic == INT_)
+				{
+					if(child2->exp_type != _INT)
+						printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
+				}
+				else if(child->type->basic == FLOAT_)
+				{
+					if(child2->exp_type != _FLOAT)
+						printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
+				}
+			}
+		}
+		else if(strcmp(child->name, "PLUS")==0
+			|| strcmp(child->name, "MINUS")==0
+			|| strcmp(child->name, "STAR")==0
+			|| strcmp(child->name, "DIV")==0)
+		{
+			child = root->first_child;
+			Exp(child);
+
+			tree* child2 = child->next_sibling;
+			Exp(child2);
+
+			if(child->exp_type == _VAR || child2->exp_type == _VAR || child->exp_type != child2->exp_type)
+				printf("Error type 7 at Line %d: Type mismatched for operands.\n", child->line);
+		}
+	}
+	else if(root->child_num == 1)
+	{
+		//ID INT FLOAT
+		tree *child = root->first_child;
+		if(strcmp(child->name, "ID")==0)
+		{
+			int val = lookup_sym(child);
+			if(val == -1)
+			{
+				printf("Error type 1 at Line %d: Undefined variable \"%s\".\n", child->line, child->value);
+			}
+			root->type = child->type;
+			strcpy(root->struct_name, child->struct_name);
+			
+			root->exp_type = _VAR;
+		}
+		else
+		{
+			//INT FLOAT
+			if(strcmp(child->name, "INT")==0)
+			{
+				root->exp_type = _INT;
+			}
+			else if(strcmp(child->name,"FLOAT")==0)
+			{
+				root->exp_type = _FLOAT;
+			}
+		}
+	}
+	else if(root->child_num == 4)
+	{
+		//Exp LB Exp RP
+		//ID LP Args RP
+		tree* child = root->first_child;
+		if(strcmp(child->name, "ID")==0)
+		{
+			//ID LP Args RP
+			
+			int val = lookup_func(child);
+			if(val == -1)
+			{
+				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", child->line, child->value);
+			}
+		/*	int val = lookup_sym(child);
+			if(val == -1)
+			{
+				printf("Error type 2 at Line %d: Undefined function \"%s\".\n", child->line, child->value);
+			}*/
+
+		}
+		else
+		{
+		}
+	}
+}
+
+void Stmt(tree* root)
+{
+	if(root->child_num == 1)//CompSt
+	{
+	//	tree* child = root->first_child;
+	//	child->node_kind = root->node_kind;
+	//	CompSt(child);
+	}
+	else if(root->child_num == 2) //Exp SEMI
+	{
+		tree* child = root->first_child;
+		child->node_kind = root->node_kind;
+		Exp(child);
+	}
+	else if(root->child_num == 3) //RETURN Exp SEMI
+	{
+		tree* child = root->first_child->next_sibling;//Exp
+		child->node_kind = root->node_kind;
+		Exp(child);
+	
+		if(root->return_type->basic != child->type->basic)
+			printf("Error type 8 at Line %d: Type mismatched for return.\n", child->line);
+	}
+	else if(root->child_num == 5) 
+			//IF LP Exp RP Stmt
+			//WHILE LP Exp RP Stmt
+	{
+		
+	}
+	else if(root->child_num == 7)//IF LP Exp RP Stmt ELSE Stmt
+	{
+	}
+}
+
+void StmtList(tree* root)
+{
+	if(root->child_num == 0)
+		return;
+	else
+	{
+		tree* child = root->first_child; //Stmt
+		child->node_kind = root->node_kind;
+		child->return_type = root->return_type;
+		Stmt(child);
+
+		child = child->next_sibling;
+		child->node_kind = root->node_kind;
+		child->return_type = root->return_type;
+		StmtList(child);
+	}
+}
+
 void CompSt(tree* root)
 {
 	//all the var in CompSt should be inserted into symbol table
 	tree* child = root->first_child->next_sibling; //DefList
-//	DefList(child);
-	//TODO
-	//child = child->next_sibling; //StmtList
+	child->node_kind = root->node_kind;
+	child->return_type = root->return_type;
+	DefList(child);
+	
+	child = child->next_sibling; //StmtList
+	child->node_kind = root->node_kind;
+	child->return_type = root->return_type;
+	StmtList(child);
 }
 
 void ExtDecList(tree* root)
@@ -573,8 +819,10 @@ void dfs(tree* root, int space)
 			spt stpt = (spt)malloc(sizeof(struct StructTableNode));
 			child->stpt = stpt;
 			StructSpecifier(child);
-			//insert(child->stpt)
-
+		
+			child->stpt->lineno = child->line;
+			unsigned val = insert_structTable(child->stpt);
+			printf("insert struct return %d\n", val);
 		}
 		else if(strcmp(child->name, "FunDec")==0)
 		{
@@ -599,12 +847,11 @@ void dfs(tree* root, int space)
 			FunDec(child);
 			//-----------------------------
 			child = child->next_sibling; //CompSt
-			//CompSt只会出现在函数体中
 			child->node_kind = FUN_BODY;
 			child->scope = root->scope;
-			//root->type就不需要了，内部的变量有自己的type
-			
-			//CompSt(child)
+
+			child->return_type = type;	
+			CompSt(child);
 		}
 	}
 	if(root->first_child != NULL)
@@ -620,7 +867,8 @@ void semantic_check(tree *root)
 	dfs(root, 0);
 	check_functable();
 	check_symtable();
-	printf("\n\n");
+//	check_structtable();
+//	printf("\n\n");
 }
 
 //符号表的大小确定，为0x3fff<-->16384个
@@ -651,16 +899,13 @@ void init_hash_head()
 
 int insert_funcDefTable(fdefpt node)
 {
-	printf("This fucntion name is %s\n", node->name);
 	unsigned index = hash(node->name);
-	printf("%d\n", index);
-	
 	fdefpt pt = funcDefHashHead[index];
 	while(pt!=NULL)
 	{
 		if(strcmp(pt->name, node->name)==0)
 		{
-			printf("Error type 4 at Line %d: Redefined function \"%s\"\n",node->lineno,node->name);
+			printf("Error type 4 at Line %d: Redefined function \"%s\".\n",node->lineno,node->name);
 			return -1;
 		}
 		pt=pt->next;
@@ -728,14 +973,13 @@ void check_functable()
 int insert_symtable(sympt node)
 {
 	unsigned index = hash(node->name);
-	//printf("%d\n", index);
 
 	sympt pt = symHashHead[index];
 	while(pt!=NULL)
 	{
 		if(strcmp(node->name, pt->name)==0)
 		{
-			printf("Error type 3 at Line %d: Redefined variable \"%s\"\n",node->lineno, node->name);
+			printf("Error type 3 at Line %d: Redefined variable \"%s\".\n",node->lineno, node->name);
 			return -1;
 		}
 		pt=pt->next;
@@ -751,6 +995,101 @@ int insert_symtable(sympt node)
 	{
 		node->next = symHashHead[index];
 		symHashHead[index] = node;
+		return 1;
+	}
+}
+
+int lookup_sym(tree* root)
+{
+	unsigned index = hash(root->value);
+	sympt pt = symHashHead[index];
+	while(pt!=NULL)
+	{
+		if(strcmp(root->value,pt->name)==0)
+		{
+			strcpy(root->struct_name, pt->struct_name);
+			root->type = pt->type;
+			return 1;
+		}
+		pt = pt->next;
+	}
+	return -1;
+}
+
+int lookup_func(tree* root)
+{
+	unsigned index = hash(root->value);
+	fdefpt pt = funcDefHashHead[index];
+	while(pt!=NULL)
+	{
+		if(strcmp(root->value, pt->name)==0)
+			return 1;
+		pt = pt->next;
+	}
+	return -1;
+}
+
+void check_structtable()
+{
+	for(int i=0; i<hash_size; i++)
+	{
+		if(structDefHashHead[i]!=NULL)
+		{
+			spt pt = structDefHashHead[i];
+			while(pt!=NULL)
+			{
+				printf("struct name:%s\n", pt->name);
+				FieldList fpt = pt->fieldList;
+				while(fpt!=NULL)
+				{
+					printf("  field name:%s ",fpt->name);
+					Type tp = fpt->type;
+					printf("field type: %d\n", tp->kind);
+					while(tp->kind != BASIC && tp->kind != STRUCTURE)
+					{
+						printf("		array_size: %d\n", tp->array.size);
+						tp=tp->array.elem;
+					}
+					if(tp->kind == BASIC)
+					{
+						printf("		the field's basic type is %d\n", tp->basic);
+					}
+					if(tp->kind == STRUCTURE)
+					{
+						printf("		the field's struct_type is %s\n", fpt->struct_name);
+					}
+					fpt = fpt->next;
+				}
+				pt = pt->next;
+			}
+		}
+	}
+}
+
+int insert_structTable(spt structpt)
+{
+	unsigned index = hash(structpt->name);
+
+	spt pt = structDefHashHead[index];
+	while(pt!=NULL)
+	{
+		if(strcmp(structpt->name, pt->name)==0)
+		{
+			printf("Error type 16 at Line %d: Duplicated name \"%s\"\n", structpt->lineno,structpt->name);
+			return -1;
+		}
+		pt = pt->next;
+	}
+	if(structDefHashHead[index] == NULL)
+	{
+		structDefHashHead[index] = structpt;
+		structpt->next = NULL;
+		return 0;
+	}
+	else
+	{
+		structpt->next = structDefHashHead[index];
+		structDefHashHead[index] = structpt;
 		return 1;
 	}
 }

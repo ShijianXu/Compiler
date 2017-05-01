@@ -43,7 +43,10 @@ typedef struct node
 	//STR_DEF 中的变量
 	spt stpt;
 	//fieldpt记录结构体的某一个域，之后插入结构体的filedList中
-	FieldList fieldpt;
+	FieldList field;
+
+	enum {_VAR, _INT, _FLOAT} exp_type;
+	Type return_type;
 }tree;
 
 tree *insert(char *ch, int num, char *value, int lineno, ...);
@@ -53,6 +56,7 @@ void treePrint(tree *root, int space);
 //#####################################
 struct StructTableNode
 {
+	int lineno;
 	char name[40];	//结构体名
 	enum {Definition, Declaration} kind;
 	FieldList fieldList;
@@ -130,6 +134,7 @@ void semantic_check(tree *root);
 void init_hash_head();
 int insert_symtable(sympt node);
 int insert_funcDefTable(fdefpt func);
+int insert_structTable(spt structpt);
 unsigned hash(char *name);
 
 void dfs(tree* root, int space);
@@ -140,6 +145,7 @@ void VarDec(tree* root);
 Type Specifier(tree* root);
 void check_symtable();
 void check_functable();
+void check_structtable();
 void StructSpecifier(tree* root);
 void DefList(tree* root);
 void Def(tree* root);
@@ -147,5 +153,11 @@ void CompSt(tree* root);
 void DecList(tree* root);
 void Dec(tree* root);
 void ExtDecList(tree* root);
+void CompSt(tree* root);
+void StmtList(tree* root);
+void Stmt(tree* root);
+void Exp(tree* root);
+int lookup_sym(tree* root);
+int lookup_func(tree* root);
 
 #endif
