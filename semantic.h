@@ -8,7 +8,9 @@ typedef struct SymTableNode* sympt;
 typedef struct FuncDefTableNode* fdefpt;
 typedef struct FuncDecTableNode* fdecpt;
 typedef struct StructTableNode* spt;
+
 enum basic_type { INT_, FLOAT_};
+enum EXP_TYPE {_NONE, _FUNC, _STRUCTURE, _ARRAY, _INT, _FLOAT};
 
 //####################################
 typedef struct node
@@ -45,7 +47,9 @@ typedef struct node
 	//fieldpt记录结构体的某一个域，之后插入结构体的filedList中
 	FieldList field;
 
-	enum {_VAR, _INT, _FLOAT} exp_type;
+	enum EXP_TYPE exp_type;
+	struct ArgsType* args;
+	int isNum;
 	Type return_type;
 }tree;
 
@@ -54,6 +58,13 @@ void treePrint(tree *root, int space);
 
 
 //#####################################
+
+struct ArgsType
+{
+	enum EXP_TYPE et;
+	struct ArgsType* next;
+};
+
 struct StructTableNode
 {
 	int lineno;
@@ -101,7 +112,7 @@ struct SymTableNode
 
 struct Type_
 {
-	enum { NONE, BASIC, ARRAY, STRUCTURE} kind;
+	enum { NONE, FUNCTION, BASIC, ARRAY, STRUCTURE} kind;
 	union
 	{
 		enum basic_type basic;	//基本类型，具体是int还是float
@@ -157,7 +168,9 @@ void CompSt(tree* root);
 void StmtList(tree* root);
 void Stmt(tree* root);
 void Exp(tree* root);
-int lookup_sym(tree* root);
-int lookup_func(tree* root);
+int Args(tree* root, int num);
 
+sympt lookup_sym(tree* root);
+fdefpt lookup_func(tree* root);
+spt lookup_struct(tree* root);
 #endif

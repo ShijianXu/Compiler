@@ -5,5 +5,5 @@ int func(int i)
 
 int main()
 {
-	func(1,2);
+	func(1.2);
 }
