@@ -370,18 +370,32 @@ void Dec(tree* root)
 		child->firstCallVarDec = 1;
 		//每个VarDec NEW一个field对象
 		VarDec(child);
-		
-		if(root->stpt->fieldList == NULL)
+	
+		FieldList field = child->stpt->fieldList;
+		int redef = 0;
+		while(field!=NULL)
 		{
-			child->stpt->fieldList = child->field;
-			child->field->next = NULL;
+			if(strcmp(child->field->name, field->name)==0)
+			{
+				printf("Error type 15 at Line %d: Redefined field \"%s\".\n", child->line, child->field->name);
+				redef = 1;
+				break;
+			}
+			field = field->next;
 		}
-		else
+		if(redef == 0)
 		{
-			child->field->next = child->stpt->fieldList;
-			child->stpt->fieldList = child->field;
+			if(child->stpt->fieldList == NULL)
+			{
+				child->stpt->fieldList = child->field;
+				child->field->next = NULL;
+			}
+			else
+			{
+				child->field->next = child->stpt->fieldList;
+				child->stpt->fieldList = child->field;
+			}
 		}
-		
 		root->stpt = child->stpt;
 		return;
 	}
@@ -583,6 +597,12 @@ void StructSpecifier(tree* root)
 		tree* child = root->first_child->next_sibling->first_child;
 	//	printf("struct name is %s\n", child->value);
 		strcpy(root->struct_name, child->value);
+
+		spt structpt = lookup_struct(root);
+		if(structpt == NULL)
+		{
+			printf("Error type 17 at Line %d: Undefined structure \"%s\".\n", child->line, child->value);
+		}
 		return;
 	}
 	else
@@ -800,6 +820,11 @@ void Exp(tree* root)
 							case _FLOAT:
 							{
 								if(para->type->kind!= BASIC || (para->type->kind == BASIC && para->type->basic != FLOAT_))
+								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								break;
+							}
+							case _NONE:
+							{
 								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
 								break;
 							}
@@ -1109,7 +1134,7 @@ void semantic_check(tree *root)
 //	printf("checking\n");
 	dfs(root, 0);
 //	check_functable();
-	check_symtable();
+//	check_symtable();
 //	check_structtable();
 //	printf("\n\n");
 }
@@ -1228,6 +1253,17 @@ int insert_symtable(sympt node)
 		pt=pt->next;
 	}
 
+	spt pt2 = structDefHashHead[index];
+	while(pt2!=NULL)
+	{
+		if(strcmp(node->name, pt2->name)==0)
+		{
+			printf("Error type 3 at Line %d: Redefined variable \"%s\", conflict with struct name.\n",node->lineno, node->name);
+			return -1;
+		}
+		pt2=pt2->next;
+	}
+
 	if(symHashHead[index] == NULL)
 	{
 		symHashHead[index] = node;
@@ -1339,7 +1375,7 @@ int insert_structTable(spt structpt)
 	{
 		if(strcmp(structpt->name, pt->name)==0)
 		{
-			printf("Error type 16 at Line %d: Duplicated name \"%s\"\n", structpt->lineno,structpt->name);
+			printf("Error type 16 at Line %d: Duplicated name \"%s\".\n", structpt->lineno,structpt->name);
 			return -1;
 		}
 		pt = pt->next;

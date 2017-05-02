@@ -1,5 +1,13 @@
+struct pos
+{
+	float x, y;
+};
+
+int pos;
+
 int main()
 {
 	int i, j;
 	int i;
+	float pos;
 }

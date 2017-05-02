@@ -1,5 +1,6 @@
-int main()
+struct Position
 {
-	int i;
-	i = 3.7;
-}
+	float x, y;
+	int x;
+	struct aa b;
+};
