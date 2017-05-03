@@ -109,9 +109,11 @@ void VarDec(tree *root)
 				tree* child = root->first_child;
 				strcpy(field->name, child->value);
 				if(root->type->kind == STRUCTURE)
+				{
 					strcpy(field->struct_name, root->struct_name);
+				}
 				field->type = root->type;
-
+				
 				root->field = field;
 			}
 			else
@@ -499,15 +501,46 @@ void Def(tree* root)
 		tree* child = root->first_child;	//specifier
 		Type type = (Type)malloc(sizeof(struct Type_));
 		type = Specifier(child);
-		
+	
 		if(type->kind == STRUCTURE)
 		{
+			tree* child0 = root->first_child->first_child;
+			
+			if(child0->child_num == 2)
+			{
 			tree* grandchild=child->first_child; //StructSpecifier
 			grandchild->node_kind = root->node_kind;
 			grandchild->scope = root->scope;
 
 			StructSpecifier(grandchild);
 			strcpy(root->struct_name, grandchild->struct_name);
+			}
+			else
+			{
+				printf("child_num:%d\n", child0->child_num);
+				//STRUCT OptTag LC DefList RC
+				spt stpt = (spt)malloc(sizeof(struct StructTableNode));
+				child0->node_kind = STR_DEF;//STR_DEF
+				child0->scope = root->scope;
+				child0->stpt = stpt;
+				StructSpecifier(child0);
+				
+				child0->stpt->lineno = child0->line;
+				
+
+				//unsigned val = insert_structTable(child0->stpt);
+				type->structDefpt = child0->stpt;
+				//TODO TODO HAVE DONE, JUST FOR ATTENTION
+				//嵌套定义
+				
+			/*	FieldList fl = type->structDefpt->fieldList;
+				while(fl!=NULL)
+				{
+					printf("fl name: %s\n", fl->name);
+					fl = fl->next;
+				}*/
+
+			}
 		}
 		root->type = type;
 		
@@ -667,6 +700,7 @@ void Exp(tree* root)
 					else if(type->kind == STRUCTURE)
 					{
 						root->array_basic_type = _STRUCTURE;
+						strcpy(root->struct_name, sym->struct_name);
 					}
 					root->array_dim = dim;
 				}
@@ -729,6 +763,18 @@ void Exp(tree* root)
 			if(child->exp_type == _ARRAY && child0->child_num != 1)
 			{
 				if(child->array_basic_type != child2->exp_type)
+				{
+					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
+				}
+			}
+			else if(child->exp_type == _STRUCTURE && child2->exp_type == _STRUCTURE)
+			{
+				spt structpt1;
+				spt structpt2;
+
+				//TODO TODO
+				//structural equivalence
+				if(strcmp(child->struct_name, child2->struct_name)!=0)
 				{
 					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
 				}
@@ -1501,7 +1547,22 @@ void check_structtable()
 					}
 					if(tp->kind == STRUCTURE)
 					{
-						printf("		the field's struct_type is %s\n", fpt->struct_name);
+						if(strlen(fpt->struct_name)!=0)
+							printf("		the field's struct_type is %s\n", fpt->struct_name);
+						else
+						{
+							printf("		this is a nested struct\n");
+							spt pointer = tp->structDefpt;
+							FieldList fl = pointer->fieldList;
+
+							while(fl!=NULL)
+							{
+								//printf("hello\n");
+								//TODO TODO
+								printf("			field name:%s\n", fl->name);
+								fl = fl->next;
+							}
+						}
 					}
 					fpt = fpt->next;
 				}

@@ -128,7 +128,8 @@ struct Type_
 			int size; 	//数组维度
 		} array;	//数组类型信息
 
-		FieldList fieldList;	//结构体类型的信息是一个链表
+		//FieldList fieldList;	//结构体类型的信息是一个链表
+		spt structDefpt;
 	};
 };
 

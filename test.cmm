@@ -1,6 +1,19 @@
+struct pos
+{
+	int p,q;
+};
+
 struct Position
 {
-	float x, y;
-	int x;
-	struct aa b;
+	struct
+	{
+		int a,b;
+	} c[10][3];
+
+	int x,y;
+
+	struct
+	{
+		float m,n[10];
+	} l[3];
 };
