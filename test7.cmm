@@ -1,5 +1,15 @@
 int main()
 {
 	float j;
+	int i;
+	int k;
+	int a[10];
+	int b[10];
+	
+	i+j;
+	i+k;
+	2+3;
 	10 + j;
+	
+	a - b;
 }

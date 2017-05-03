@@ -1,9 +1,16 @@
-int func(int i)
+struct pos
 {
-	return i;
+	float x, y;
+};
+
+int func(struct pos i, int b[10])
+{
+	return 2;
 }
 
 int main()
 {
-	func(1.2);
+	int k, j[15][3];
+	struct pos a;
+	func(a, j);
 }

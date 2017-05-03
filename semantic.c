@@ -734,7 +734,7 @@ void Exp(tree* root)
 			Exp(child);
 			Exp(child2);
 
-			if(child->exp_type != child2->exp_type)
+			if((child->exp_type != _INT && child->exp_type != _FLOAT) || (child2->exp_type != _INT && child2->exp_type != _FLOAT) || child->exp_type != child2->exp_type)
 			{
 				printf("Error type 7 at Line %d: Type mismatched for operands.\n", child->line);
 			}
@@ -770,6 +770,45 @@ void Exp(tree* root)
 				if(field == NULL)
 				{
 					printf("Error type 14 at Line %d: Non-existent field \"%s\".\n", child->line,child->value);
+				}
+			}
+		}
+		else if(strcmp(child->name,"LP")==0)
+		{
+			//ID LP RP
+			tree* child = root->first_child; //ID
+			Exp(child);
+			root->exp_type = child->exp_type;
+			
+			sympt sym = lookup_sym(child);
+			fdefpt func = lookup_func(child);
+			if(sym==NULL)
+			{
+				printf("Error type 2 at Line %d: Undefined function \"%s\"\n",child->line, child->value);
+			}
+			else if(sym->type->kind != FUNCTION)
+			{
+				printf("Error type 11 at Line %d: \"%s\" is not a function.\n", child->line, child->value);
+			}
+			else
+			{
+				//函数存在
+				switch(func->return_type)
+				{
+					case INT_:
+					{
+						root->exp_type = _INT;
+						break;
+					}
+					case FLOAT_:
+					{
+					root->exp_type = _FLOAT;
+						break;
+					}
+					default:
+					{
+						printf("Error other func return type.\n");
+					}
 				}
 			}
 		}
@@ -823,6 +862,18 @@ void Exp(tree* root)
 								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
 								break;
 							}
+							case _ARRAY:
+							{
+								if(para->type->kind != ARRAY)
+									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								break;
+							}
+							case _STRUCTURE:
+							{
+								if(para->type->kind != STRUCTURE)
+									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								break;
+							}
 							case _NONE:
 							{
 								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
@@ -835,6 +886,23 @@ void Exp(tree* root)
 						}
 						at=at->next;
 						para=para->next_para;
+					}
+				}
+				switch(func->return_type)
+				{
+					case INT_:
+					{
+						root->exp_type = _INT;
+						break;
+					}
+					case FLOAT_:
+					{
+					root->exp_type = _FLOAT;
+						break;
+					}
+					default:
+					{
+						printf("Error other func return type.\n");
 					}
 				}
 			}
@@ -932,7 +1000,7 @@ void Stmt(tree* root)
 				break;
 			}
 			default:
-				printf("Error: other return type.\n");
+				printf("Error type 8 at Line %d: Type mismatched for return.\n", child->line);
 		}
 	}
 	else if(root->child_num == 5) 
