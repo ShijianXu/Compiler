@@ -19,7 +19,7 @@
 %token <nd> OR DOT NOT TYPE LP RP LB RB LC RC
 %token <nd> STRUCT RETURN IF ELSE WHILE
 
-%type <nd> Program ExtDefList ExtDef ExtDecList Specifier 
+%type <nd> Program CheckPoint ExtDefList ExtDef ExtDecList Specifier 
 %type <nd> StructSpecifier OptTag Tag VarDec FunDec VarList 
 %type <nd> ParamDec CompSt StmtList Stmt DefList Def DecList Dec Exp Args
 
@@ -36,13 +36,16 @@
 %left LP RP LB RB DOT
 %%
 /* High-level Definitions */
-Program : ExtDefList {root = $$ = insert("Program", 1, "none", -1, $1);}
+Program : ExtDefList CheckPoint {root = $$ = insert("Program", 2, "none", -1, $1, $2);}
 	;
 ExtDefList : ExtDef ExtDefList {$$=insert("ExtDefList", 2, "none", -1, $1, $2);}
 	| /* empty */ {$$=insert("ExtDefList", 0, "none", -1);}
 	;
+CheckPoint : {$$=insert("CheckPoint", 0, "none", -1);}
+	;
 ExtDef : Specifier ExtDecList SEMI {$$=insert("ExtDef", 3, "none", -1, $1, $2, $3);}
 	| Specifier SEMI {$$=insert("ExtDef", 2, "none", -1, $1, $2);}
+	| Specifier FunDec SEMI {$$=insert("ExtDef", 3, "none", -1, $1, $2, $3);}
 	| Specifier FunDec CompSt {$$=insert("ExtDef", 3, "none", -1, $1, $2, $3);}
 	;
 ExtDecList : VarDec {$$=insert("ExtDecList", 1, "none", -1, $1);}
@@ -147,7 +150,7 @@ int main(int argc, char** argv)
 	if(no_error)
 	{
 		semantic_check(root);
-//		treePrint(root,0);
+	//	treePrint(root,0);
 	}
 }
 int yyerror(char* msg)

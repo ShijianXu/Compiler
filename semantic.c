@@ -84,7 +84,10 @@ void VarDec(tree *root)
 				
 				strcpy(sym->name, child->value);
 				sym->type = root->type;
-				insert_symtable(sym);
+				sym->lineno = child->line;
+				
+				if(root->fun_definition == 1)
+					insert_symtable(sym);
 
 				if(root->type->kind == STRUCTURE)
 					strcpy(para->struct_name, root->struct_name);
@@ -254,6 +257,7 @@ void ParamDec(tree* root)
 	}
 	child = child->next_sibling;	//VarDec, include name, type(int or int[10])
 	child->type = type;
+	child->fun_definition = root->fun_definition;
 	child->node_kind = root->node_kind;
 	child->firstCallVarDec = 1;
 	strcpy(child->struct_name, root->struct_name);
@@ -280,6 +284,7 @@ void VarList(tree* root)
 	
 	tree* child = root->first_child;
 	child->func = root->func;
+	child->fun_definition = root->fun_definition;
 	child->node_kind = root->node_kind;
 	ParamDec(child);
 	root->func = child->func;
@@ -291,6 +296,7 @@ void VarList(tree* root)
 		//root->child_num == 3
 		child = child->next_sibling->next_sibling;//Another VarList
 		child->func = root->func;
+		child->fun_definition = root->fun_definition;
 		child->node_kind = root->node_kind;
 		VarList(child);
 		return;
@@ -312,17 +318,29 @@ void FunDec(tree *root)//root->type记录函数返回值
 	{
 		fun->para_num = 0;
 		fun->para_list = NULL;
-		fun->lineno = child->line;
-		unsigned val = insert_funcDefTable(fun);
-		
-		if(val!=-1)
+		fun->lineno = root->line;
+	
+		if(root->fun_definition == 1)
 		{
-			sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
-			strcpy(sym->name, fun->name);
-			Type sym_type = (Type)malloc(sizeof(struct Type_));
-			sym_type->kind = FUNCTION;
-			sym->type = sym_type;
-			insert_symtable(sym);
+			unsigned val = insert_funcDefTable(fun);
+		
+			if(val!=-1)
+			{
+				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
+				strcpy(sym->name, fun->name);
+				Type sym_type = (Type)malloc(sizeof(struct Type_));
+				sym_type->kind = FUNCTION;
+				sym->type = sym_type;
+				insert_symtable(sym);
+			}
+		}
+		else
+		{
+			unsigned val = insert_funcDecTable(fun);
+			if(val == -1)
+			{
+				printf("Error type 19 at Line %d: Inconsistent declaration of function \"%s\".\n", child->line, fun->name);
+			}
 		}
 //		printf("insert fun return %d\n", val);
 	}
@@ -334,17 +352,29 @@ void FunDec(tree *root)//root->type记录函数返回值
 
 		child->node_kind = root->node_kind;
 		child->func = fun;
+		child->fun_definition = root->fun_definition;
 		VarList(child);
-
-		unsigned val = insert_funcDefTable(child->func);
-		if(val != -1)
+	
+		if(root->fun_definition == 1)
 		{
-			sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
-			strcpy(sym->name, fun->name);
-			Type sym_type = (Type)malloc(sizeof(struct Type_));
-			sym_type->kind = FUNCTION;
-			sym->type = sym_type;
-			insert_symtable(sym);
+			unsigned val = insert_funcDefTable(child->func);
+			if(val != -1)
+			{
+				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
+				strcpy(sym->name, fun->name);
+				Type sym_type = (Type)malloc(sizeof(struct Type_));
+				sym_type->kind = FUNCTION;
+				sym->type = sym_type;
+				insert_symtable(sym);
+			}
+		}
+		else
+		{
+			unsigned val = insert_funcDecTable(child->func);
+			if(val == -1)
+			{
+				printf("Error type 19 at Line %d: Inconsistent declaration of function \"%s\".\n", child->line, fun->name);
+			}
 		}
 
 	//	sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
@@ -352,11 +382,6 @@ void FunDec(tree *root)//root->type记录函数返回值
 	//	sym->type = child->func->return_type;
 
 //		printf("insert fun return %d\n", val);
-	}
-	else
-	{
-		printf("FunDec has no other gen.\n");
-		return;
 	}
 }
 
@@ -1202,6 +1227,13 @@ void Stmt(tree* root)
 	}
 	else if(root->child_num == 7)//IF LP Exp RP Stmt ELSE Stmt
 	{
+		tree* child = root->first_child->next_sibling->next_sibling;
+		Exp(child);
+		child = child->next_sibling->next_sibling;
+		Stmt(child);
+		child = child->next_sibling->next_sibling;
+		Stmt(child);
+		//TODO TODO， IF ELSE
 	}
 }
 
@@ -1265,8 +1297,13 @@ void ExtDecList(tree* root)
 	}
 }
 
+
 void dfs(tree* root, int space)
 {
+	if(strcmp(root->name, "CheckPoint") == 0)
+	{
+		CheckPoint();
+	}
 	if(strcmp(root->name, "ExtDef")==0)
 	{
 		//每个ExtDef意味着一个结构体、函数或全局变量的定义
@@ -1358,15 +1395,24 @@ void dfs(tree* root, int space)
 			child->type = type;	//函数返回值
 			child->node_kind = FUN_DEC;
 			child->scope = root->scope;
-			
+		
+			tree* child2 = child->next_sibling;
+			if(strcmp(child2->name,"CompSt")==0)
+				child->fun_definition = 1;
+			else if(strcmp(child2->name, "SEMI")==0)
+				child->fun_definition = 0;
+
 			FunDec(child);
 			//-----------------------------
+			if(child->fun_definition == 1)
+			{
 			child = child->next_sibling; //CompSt
 			child->node_kind = FUN_BODY;
 			child->scope = root->scope;
 
 			child->return_type = type;
 			CompSt(child);
+			}
 		}
 	}
 	if(root->first_child != NULL)
@@ -1409,6 +1455,102 @@ void init_hash_head()
 		funcDefHashHead[i]=NULL;
 		funcDecHashHead[i]=NULL;
 		structDefHashHead[i]=NULL;
+	}
+}
+
+int insert_funcDecTable(fdefpt node)
+{
+	unsigned index = hash(node->name);
+	fdefpt pt = funcDecHashHead[index];
+	while(pt!=NULL)
+	{
+		if(strcmp(pt->name, node->name)==0)
+		{
+			if(pt->return_type != node->return_type)
+				return -1;
+
+			struct Param* para1 = pt->para_list;
+			struct Param* para2 = node->para_list;
+			int para_conflict = 0;
+			while(para1 != NULL || para2 != NULL)
+			{
+				if((para1==NULL && para2!=NULL) || (para1!=NULL && para2==NULL))
+				{
+					para_conflict = 1;
+					break;
+				}
+				if(para1->type->kind != para2->type->kind)
+				{
+					para_conflict = 1;
+					break;
+				}
+				else if(para1->type->kind == BASIC)
+				{
+					if(para1->type->basic != para2->type->basic)
+					{
+						para_conflict = 1;
+						break;
+					}
+				}
+				else if(para1->type->kind == STRUCTURE)
+				{
+					if(strcmp(para1->struct_name, para2->struct_name)!=0)
+					{
+						para_conflict = 1;
+						break;
+					}
+				}
+				else if(para1->type->kind == ARRAY)
+				{
+					Type type1 = para1->type;
+					Type type2 = para2->type;
+					int type_error = 0;
+					while((type1->kind != BASIC && type1->kind != STRUCTURE) || (type2->kind !=BASIC && type2->kind != STRUCTURE))
+					{
+						if(((type1->kind==BASIC || type1->kind == STRUCTURE) && (type2->kind!=BASIC && type2->kind!=STRUCTURE)) || ((type2->kind==BASIC || type2->kind == STRUCTURE) && (type1->kind!=BASIC && type1->kind!=STRUCTURE)))
+						{
+							type_error = 1;
+							break;
+						}
+						type1=type1->array.elem;
+						type2=type2->array.elem;
+					}
+					if(type_error == 1)
+					{
+						para_conflict = 1;
+						break;
+					}
+					else
+					{
+						if(type1->kind!=type2->kind)
+						{
+							para_conflict = 1;
+							break;
+						}
+					}
+				}
+				para1 = para1->next_para;
+				para2 = para2->next_para;
+			}
+			if(para_conflict == 1)
+				return -1;
+			else
+				return 1;
+		}
+		pt=pt->next;
+	}
+
+	if(funcDecHashHead[index]==NULL)
+	{
+		funcDecHashHead[index]=node;
+		node->next = NULL;
+		return 0;
+	}
+	else
+	{
+		node->next = funcDecHashHead[index];
+		funcDecHashHead[index]=node;
+		return 0;
 	}
 }
 
@@ -1684,6 +1826,107 @@ void check_symtable()
 					printf("\n");
 					*/
 				pt=pt->next;
+			}
+		}
+	}
+}
+
+void CheckPoint()
+{
+	for(int i = 0; i<hash_size; i++)
+	{
+		if(funcDecHashHead[i]!=NULL)
+		{
+			fdefpt func = funcDecHashHead[i];
+			while(func!=NULL)
+			{
+				tree* node = (tree*)malloc(sizeof(tree));
+				strcpy(node->value, func->name);
+
+				fdefpt fundef = lookup_func(node);
+				if(fundef == NULL)
+				{
+					printf("Error type 18 at Line %d: Undefined function \"%s\".\n", func->lineno, func->name);
+				}
+				else
+				{
+					if(func->return_type != fundef->return_type)
+					{
+						printf("Error type 19 at Line %d: Inconsistent declaration of function \"%s\".\n", func->lineno, func->name);
+						func=func->next;
+						continue;
+					}
+					struct Param* para1 = func->para_list;
+					struct Param* para2 = fundef->para_list;
+					int para_conflict = 0;
+					while(para1 != NULL || para2 != NULL)
+					{
+						if((para1==NULL && para2!=NULL) || (para1!=NULL && para2==NULL))
+						{
+							para_conflict = 1;
+							break;
+						}
+						if(para1->type->kind != para2->type->kind)
+						{
+							para_conflict = 1;
+							break;
+						}
+						else if(para1->type->kind == BASIC)
+						{
+							if(para1->type->basic != para2->type->basic)
+							{
+								para_conflict = 1;
+								break;
+							}
+						}
+						else if(para1->type->kind == STRUCTURE)
+						{
+							if(strcmp(para1->struct_name, para2->struct_name)!=0)
+							{
+								para_conflict = 1;
+								break;
+							}
+						}
+						else if(para1->type->kind == ARRAY)
+						{
+							Type type1 = para1->type;
+							Type type2 = para2->type;
+							int type_error = 0;
+							while((type1->kind != BASIC && type1->kind != STRUCTURE) || (type2->kind !=BASIC && type2->kind != STRUCTURE))
+							{
+								if(((type1->kind==BASIC || type1->kind == STRUCTURE) && (type2->kind!=BASIC && type2->kind!=STRUCTURE)) || ((type2->kind==BASIC || type2->kind == STRUCTURE) && (type1->kind!=BASIC && type1->kind!=STRUCTURE)))
+								{
+									type_error = 1;
+									break;
+								}
+								type1=type1->array.elem;
+								type2=type2->array.elem;
+							}
+							if(type_error == 1)
+							{
+								para_conflict = 1;
+								break;
+							}
+							else
+							{
+								if(type1->kind!=type2->kind)
+								{
+									para_conflict = 1;
+									break;
+								}
+							}
+						}
+						para1 = para1->next_para;
+						para2 = para2->next_para;
+					}
+					if(para_conflict == 1)
+					{
+						printf("Error type 19 at Line %d: Inconsistent declaration of function \"%s\", conflict with function definition.\n", func->lineno, func->name);
+						func = func->next;
+						continue;
+					}
+				}
+				func=func->next;
 			}
 		}
 	}

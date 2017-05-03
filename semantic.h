@@ -27,7 +27,7 @@ typedef struct node
 	//##################
 	int firstCallVarDec;
 	//用于标示当前处理的是什么地方的变量
-	enum {GLO_VAR, FUN_DEC, FUN_BODY, STR_DEF } node_kind;
+	enum {GLO_VAR, FUN_DEC, FUN_DEF, FUN_BODY, STR_DEF } node_kind;
 	char struct_name[40];	//当一个变量的类型为结构体时有用
 	
 	//标示变量的作用域，同一作用域内的变量scope值相同
@@ -37,6 +37,7 @@ typedef struct node
 	//FUN_BODY GLO_VAR中变量
 	sympt syms;
 	
+	int fun_definition;
 	//FUN_DEC参数
 	fdefpt func;
 	//FUN_DEC中的某一个参数，之后插入func的参数链表中
@@ -144,13 +145,14 @@ struct FieldList_
 #define hash_size 0x3fff
 sympt symHashHead[hash_size];
 fdefpt funcDefHashHead[hash_size];	//definition
-fdecpt funcDecHashHead[hash_size];	//declaration
+fdefpt funcDecHashHead[hash_size];	//declaration
 spt structDefHashHead[hash_size];
 
 void semantic_check(tree *root);
 void init_hash_head();
 int insert_symtable(sympt node);
 int insert_funcDefTable(fdefpt func);
+int insert_funcDecTable(fdefpt func);
 int insert_structTable(spt structpt);
 unsigned hash(char *name);
 
@@ -175,6 +177,7 @@ void StmtList(tree* root);
 void Stmt(tree* root);
 void Exp(tree* root);
 int Args(tree* root, int num);
+void CheckPoint();
 
 sympt lookup_sym(tree* root);
 fdefpt lookup_func(tree* root);
