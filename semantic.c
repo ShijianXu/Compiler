@@ -769,15 +769,71 @@ void Exp(tree* root)
 			}
 			else if(child->exp_type == _STRUCTURE && child2->exp_type == _STRUCTURE)
 			{
-				spt structpt1;
-				spt structpt2;
+				spt structpt1 = lookup_struct(child);
+				spt structpt2 = lookup_struct(child2);
 
-				//TODO TODO
-				//structural equivalence
-				if(strcmp(child->struct_name, child2->struct_name)!=0)
+				FieldList fl1 = structpt1->fieldList;
+				FieldList fl2 = structpt2->fieldList;
+				
+
+				int str_equ = 1;
+				while(fl1!=NULL || fl2!=NULL)
+				{
+					if((fl1==NULL && fl2 != NULL) ||(fl1!=NULL && fl2 ==NULL))
+					{
+						str_equ = 0;
+						break;
+					}
+					else
+					{
+						if(fl1->type->kind == fl2->type->kind)
+						{
+							if(fl1->type->kind == ARRAY)
+							{
+								Type t1 = fl1->type;
+								Type t2 = fl2->type;
+								int dim1 = 0;
+								int dim2 = 0;
+								while(t1->kind!=BASIC && t1->kind !=STRUCTURE)
+								{
+									dim1+=1;
+									t1 = t1->array.elem;
+								}
+								while(t2->kind!=BASIC && t2->kind !=STRUCTURE)
+								{
+									dim2+=1;
+									t2=t2->array.elem;
+								}
+
+								if(dim1!=dim2)
+								{
+									str_equ = 0;
+									break;
+								}
+							}
+							else if(fl1->type->kind == STRUCTURE)
+							{
+								//TODO TOO COMPLECATED
+							}
+						}
+						else
+						{
+							str_equ = 0;
+							break;
+						}
+					}
+					fl1=fl1->next;
+					fl2=fl2->next;
+				}
+
+				if(str_equ == 0)
 				{
 					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
 				}
+			/*	else if(strcmp(child->struct_name, child2->struct_name)!=0)
+				{
+					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
+				}*/
 			}
 			else if(child->exp_type != _NONE && child->exp_type != child2->exp_type)
 				printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
