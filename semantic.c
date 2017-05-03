@@ -649,6 +649,26 @@ void Exp(tree* root)
 				else if(sym->type->kind == ARRAY)
 				{
 					root->exp_type = _ARRAY;
+					
+					int dim = 0;
+					Type type = sym->type;
+					while(type->kind != BASIC && type->kind != STRUCTURE)
+					{
+						dim +=1;	
+						type = type->array.elem;
+					}
+					if(type->kind == BASIC)
+					{
+						if(type->basic == INT_)
+							root->array_basic_type = _INT;
+						else if(type->basic == FLOAT_)
+							root->array_basic_type = _FLOAT;
+					}
+					else if(type->kind == STRUCTURE)
+					{
+						root->array_basic_type = _STRUCTURE;
+					}
+					root->array_dim = dim;
 				}
 				else if(sym->type->kind == STRUCTURE)
 				{
@@ -704,7 +724,16 @@ void Exp(tree* root)
 			assert(strcmp(child2->name, "Exp")==0);
 			Exp(child2);
 
-			if(child->exp_type != _NONE && child->exp_type != child2->exp_type)
+			tree* child0 = root->first_child;
+
+			if(child->exp_type == _ARRAY && child0->child_num != 1)
+			{
+				if(child->array_basic_type != child2->exp_type)
+				{
+					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
+				}
+			}
+			else if(child->exp_type != _NONE && child->exp_type != child2->exp_type)
 				printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
 			root->exp_type = child->exp_type;
 		}
@@ -748,6 +777,7 @@ void Exp(tree* root)
 		}
 		else if(strcmp(child->name,"DOT")==0)
 		{
+			//Exp DOT ID
 			tree* child = root->first_child;//Exp
 			Exp(child);
 			if(child->exp_type != _STRUCTURE)
@@ -760,11 +790,37 @@ void Exp(tree* root)
 				//child->struct_name;
 				//assert(spt != NULL);
 				child = child->next_sibling->next_sibling;//ID
+
 				FieldList field = structpt->fieldList;
 				while(field!= NULL)
 				{
 					if(strcmp(field->name, child->value)==0)
+					{
+						switch(field->type->kind)
+						{
+							case BASIC:
+							{
+								if(field->type->basic == INT_)
+									root->exp_type = _INT;
+								else
+									root->exp_type = _FLOAT;
+								break;
+							}
+							case ARRAY:
+							{
+								root->exp_type = _ARRAY;
+								break;
+							}
+							case STRUCTURE:
+							{
+								root->exp_type = _STRUCTURE;
+								break;
+							}
+							default:
+								printf("Error: other struct field type.\n");
+						}
 						break;
+					}
 					field = field->next;
 				}
 				if(field == NULL)
@@ -864,8 +920,17 @@ void Exp(tree* root)
 							}
 							case _ARRAY:
 							{
+								Type type = para->type;
+								int dim = 0;
+								while(type->kind != BASIC && type->kind != STRUCTURE)
+								{
+									dim +=1;
+									type = type->array.elem;
+								}
 								if(para->type->kind != ARRAY)
 									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								else if(dim != at->array_dim)
+									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, the dim of array is wrong.\n",child->line, func->name);	
 								break;
 							}
 							case _STRUCTURE:
@@ -912,17 +977,25 @@ void Exp(tree* root)
 			//Exp LB Exp RB
 			tree* child = root->first_child;
 			Exp(child);
-			if(child->exp_type != _ARRAY)
+			root->exp_type = child->exp_type;
+			root->array_dim = child->array_dim;
+			root->array_basic_type = child->array_basic_type;
+
+			tree* child2 = root->first_child->first_child;
+			if(strcmp(child2->name,"ID")==0)
 			{
-				printf("Error type 10 at Line %d: This is not an array.\n", child->line);
-			}
-			else
-			{
-				child = child->next_sibling->next_sibling;
-				Exp(child);
-				if(child->exp_type != _INT)
+				if(child->exp_type != _ARRAY)
 				{
-					printf("Error type 12 at Line %d: This number is not an integer.\n", child->line);
+					printf("Error type 10 at Line %d: This is not an array.\n", child->line);
+				}
+				else
+				{
+					child = child->next_sibling->next_sibling;
+					Exp(child);
+					if(child->exp_type != _INT)
+					{
+						printf("Error type 12 at Line %d: This number is not an integer.\n", child->line);
+					}
 				}
 			}
 		}
@@ -937,6 +1010,10 @@ int Args(tree* root, int num)
 
 	struct ArgsType* args = (struct ArgsType*)malloc(sizeof(struct ArgsType));
 	args->et = child->exp_type;
+	if(args->et == _ARRAY)
+	{
+		args->array_dim = child->array_dim;
+	}
 
 	if(root->args == NULL)
 	{

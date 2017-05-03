@@ -1,15 +1,5 @@
-int aa;
-struct ss b;
-
-int func()
-{
-	return 2;
-}
-
 int main()
 {
 	int i;
-	int j = 3.5;
-	j = 3.5;
-	i = func();
+	i = 3.7;
 }

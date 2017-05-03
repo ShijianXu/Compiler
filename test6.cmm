@@ -1,9 +1,5 @@
 int main()
 {
-	int b[10];
-	struct bb c;
 	int i;
-	10.3 = i;
-	b = i;
-	c = i;
+	10 = i;
 }

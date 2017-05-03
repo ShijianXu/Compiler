@@ -1,4 +1,4 @@
 int main()
 {
-	struct Position pos;
+	struct Position pos[10];
 }

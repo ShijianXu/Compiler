@@ -1,10 +1,5 @@
-int func(int k)
-{
-}
-
 int main()
 {
 	int i = 0;
 	inc(i);
-	func(j);
 }

@@ -3,7 +3,7 @@ int func(int i)
 	return i;
 }
 
-float func()
+int func()
 {
 	return 0;
 }

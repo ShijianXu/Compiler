@@ -48,6 +48,10 @@ typedef struct node
 	FieldList field;
 
 	enum EXP_TYPE exp_type;
+
+	int array_dim;
+	enum EXP_TYPE array_basic_type;
+
 	struct ArgsType* args;
 	int isNum;
 	Type return_type;
@@ -62,6 +66,7 @@ void treePrint(tree *root, int space);
 struct ArgsType
 {
 	enum EXP_TYPE et;
+	int array_dim;
 	struct ArgsType* next;
 };
 

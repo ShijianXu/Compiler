@@ -1,7 +1,5 @@
 int main()
 {
 	float j = 1.7;
-	struct bb c;
-	int a[10];
-	return c;
+	return j;
 }
