@@ -1,19 +1,26 @@
 struct pos
 {
-	int p,q;
+	int x,y=0;
 };
 
-struct Position
+struct pos2
 {
-	struct
-	{
-		int a,b;
-	} c[10][3];
-
-	int x,y;
-
-	struct
-	{
-		float m,n[10];
-	} l[3];
+	float x, y;
 };
+
+float func(struct pos a, struct pos b)
+{
+	if(a.x == b.x && a.y == b.y)
+		return 1.1;
+	else
+		return 0.2;
+}
+
+int func();
+
+int main()
+{
+	struct pos arr[10];
+	int array[10];
+	int ans;
+}

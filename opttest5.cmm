@@ -2,7 +2,7 @@ struct Temp1
 {
 	int i;
 	float j;
-	int m[10][4];
+	int m[10][4][3];
 };
 
 struct Temp2

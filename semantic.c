@@ -83,6 +83,9 @@ void VarDec(tree *root)
 				strcpy(para->name, child->value);
 				
 				strcpy(sym->name, child->value);
+				if(root->type->kind == STRUCTURE)
+					strcpy(sym->struct_name, root->struct_name);
+
 				sym->type = root->type;
 				sym->lineno = child->line;
 				
@@ -423,6 +426,10 @@ void Dec(tree* root)
 				child->stpt->fieldList = child->field;
 			}
 		}
+		if(root->child_num == 3)
+		{
+			printf("Error type 15 at Line %d: struct field should NOT be initialized.\n", child->line);
+		}
 		root->stpt = child->stpt;
 		return;
 	}
@@ -464,7 +471,7 @@ void Dec(tree* root)
 				}
 				default:
 				{
-					printf("other type: vardec assign exp\n");
+					printf("Error type 5 at Line %d: Type mismatched for assignment.\n", child->line);
 				}
 			}
 		}
@@ -868,7 +875,7 @@ void Exp(tree* root)
 		{
 			child = root->first_child;
 			Exp(child);
-
+			
 			tree* child2 = child->next_sibling->next_sibling;
 			Exp(child2);
 			if(child->exp_type != child2->exp_type)
@@ -879,6 +886,27 @@ void Exp(tree* root)
 			{
 				root->exp_type = child->exp_type;
 			}
+		}
+		else if(strcmp(child->name, "AND") == 0 || strcmp(child->name,"OR")==0)
+		{
+			child = root->first_child;
+			Exp(child);
+
+			tree* child2 = child->next_sibling->next_sibling;
+			Exp(child2);
+
+
+			if(child->exp_type != _INT || child2->exp_type != _INT)
+			{
+				printf("Error type 7 at Line %d: Type mismatched for \"&&\", only INT can.\n", child->line);
+			}
+			else
+			{
+				root->exp_type = _INT;
+			}
+		}
+		else if(strcmp(child->name, "NOT")==0)
+		{
 		}
 		else if(strcmp(child->name, "PLUS")==0 ||
 				strcmp(child->name, "MINUS")==0 ||
@@ -907,52 +935,61 @@ void Exp(tree* root)
 			//Exp DOT ID
 			tree* child = root->first_child;//Exp
 			Exp(child);
-			if(child->exp_type != _STRUCTURE)
+			if(child->exp_type == _ARRAY)
+			{
+				if(child->array_basic_type != _STRUCTURE)
+					printf("Error type 13 at Line %d: Illegal use of \".\"\n", child->line);
+			}
+			else if(child->exp_type != _STRUCTURE)
 			{
 				printf("Error type 13 at Line %d: Illegal use of \".\"\n", child->line);
 			}
 			else
 			{
 				spt structpt = lookup_struct(child);
-				//child->struct_name;
-				//assert(spt != NULL);
-				child = child->next_sibling->next_sibling;//ID
-
-				FieldList field = structpt->fieldList;
-				while(field!= NULL)
+				if(structpt == NULL)
 				{
-					if(strcmp(field->name, child->value)==0)
-					{
-						switch(field->type->kind)
-						{
-							case BASIC:
-							{
-								if(field->type->basic == INT_)
-									root->exp_type = _INT;
-								else
-									root->exp_type = _FLOAT;
-								break;
-							}
-							case ARRAY:
-							{
-								root->exp_type = _ARRAY;
-								break;
-							}
-							case STRUCTURE:
-							{
-								root->exp_type = _STRUCTURE;
-								break;
-							}
-							default:
-								printf("Error: other struct field type.\n");
-						}
-						break;
-					}
-					field = field->next;
+					printf("Error struct not found\n");
 				}
-				if(field == NULL)
-				{
-					printf("Error type 14 at Line %d: Non-existent field \"%s\".\n", child->line,child->value);
+				else
+				{	
+					child = child->next_sibling->next_sibling;//ID
+					FieldList field = structpt->fieldList;
+					while(field!= NULL)
+					{
+						if(strcmp(field->name, child->value)==0)
+						{
+							switch(field->type->kind)
+							{
+								case BASIC:
+								{
+									if(field->type->basic == INT_)
+										root->exp_type = _INT;
+									else
+										root->exp_type = _FLOAT;
+									break;
+								}
+								case ARRAY:
+								{
+									root->exp_type = _ARRAY;
+									break;
+								}
+								case STRUCTURE:
+								{
+									root->exp_type = _STRUCTURE;
+									break;
+								}
+								default:
+									printf("Error: other struct field type.\n");
+							}
+							break;
+						}
+						field = field->next;
+					}
+					if(field == NULL)
+					{
+						printf("Error type 14 at Line %d: Non-existent field \"%s\".\n", child->line,child->value);
+					}
 				}
 			}
 		}
@@ -1105,6 +1142,7 @@ void Exp(tree* root)
 			tree* child = root->first_child;
 			Exp(child);
 			root->exp_type = child->exp_type;
+
 			root->array_dim = child->array_dim;
 			root->array_basic_type = child->array_basic_type;
 
@@ -1136,7 +1174,8 @@ int Args(tree* root, int num)
 	num += 1;
 
 	struct ArgsType* args = (struct ArgsType*)malloc(sizeof(struct ArgsType));
-	args->et = child->exp_type;
+
+	args->et = child->array_basic_type;
 	if(args->et == _ARRAY)
 	{
 		args->array_dim = child->array_dim;
@@ -1217,23 +1256,28 @@ void Stmt(tree* root)
 			child = child->next_sibling->next_sibling;//Exp
 			Exp(child);
 
-			//if(child->exp_type)
-			//TODO TODO 仅有int才能做逻辑运算或作为if和while的条件
+			child = child->next_sibling->next_sibling;
+			child->return_type = root->return_type;
+			Stmt(child);
 		}
 		else
 		{
 			assert(strcmp(child->name,"WHILE")==0);
+			//TODO TODO
 		}
 	}
 	else if(root->child_num == 7)//IF LP Exp RP Stmt ELSE Stmt
 	{
 		tree* child = root->first_child->next_sibling->next_sibling;
 		Exp(child);
+		
 		child = child->next_sibling->next_sibling;
+		child->return_type = root->return_type;
 		Stmt(child);
+
 		child = child->next_sibling->next_sibling;
+		child->return_type = root->return_type;
 		Stmt(child);
-		//TODO TODO， IF ELSE
 	}
 }
 
@@ -1427,7 +1471,9 @@ void semantic_check(tree *root)
 //	printf("checking\n");
 	dfs(root, 0);
 //	check_functable();
+//printf("----------check symtable----------\n");
 //	check_symtable();
+//printf("----------check structtable--------\n");
 //	check_structtable();
 //	printf("\n\n");
 }

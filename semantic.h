@@ -51,6 +51,7 @@ typedef struct node
 	enum EXP_TYPE exp_type;
 
 	int array_dim;
+
 	enum EXP_TYPE array_basic_type;
 
 	struct ArgsType* args;
