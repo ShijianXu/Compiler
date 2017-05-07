@@ -806,7 +806,6 @@ void Exp(tree* root)
 
 				FieldList fl1 = structpt1->fieldList;
 				FieldList fl2 = structpt2->fieldList;
-				
 
 				int str_equ = 1;
 				while(fl1!=NULL || fl2!=NULL)
@@ -820,27 +819,52 @@ void Exp(tree* root)
 					{
 						if(fl1->type->kind == fl2->type->kind)
 						{
-							if(fl1->type->kind == ARRAY)
+							if(fl1->type->kind == BASIC)
+							{
+								if(fl1->type->basic != fl2->type->basic)
+								{
+									str_equ = 0;
+									break;
+								}
+							}
+							else if(fl1->type->kind == ARRAY)
 							{
 								Type t1 = fl1->type;
 								Type t2 = fl2->type;
 								int dim1 = 0;
 								int dim2 = 0;
+								int size_eq = 1;
 								while(t1->kind!=BASIC && t1->kind !=STRUCTURE)
-								{
-									dim1+=1;
-									t1 = t1->array.elem;
-								}
+								{dim1+=1;t1=t1->array.elem;}
 								while(t2->kind!=BASIC && t2->kind !=STRUCTURE)
-								{
-									dim2+=1;
-									t2=t2->array.elem;
-								}
-
+								{dim2+=1;t2=t2->array.elem;}
 								if(dim1!=dim2)
+								{ str_equ = 0;break; }
+								else
 								{
-									str_equ = 0;
-									break;
+									t1 = fl1->type; t2 = fl2->type;
+									while(t1->kind!=BASIC && t1->kind != STRUCTURE)
+									{
+										if(t1->array.size != t2->array.size)
+										{
+											size_eq=0;
+											break;
+										}
+										t1=t1->array.elem;
+										t2=t2->array.elem;
+									}
+									if(size_eq==0)
+									{
+										str_equ = 0;break;
+									}
+									else if(t1->kind!=t2->kind || (t1->kind==BASIC && t2->kind==BASIC &&t1->basic!=t2->basic))
+									{
+										str_equ = 0;break;
+									}
+									else if(t1->kind==STRUCTURE && t2->kind==STRUCTURE)
+									{
+										if(strcmp(fl1->struct_name, fl2->struct_name)!=0) { str_equ = 0;break; }
+									}
 								}
 							}
 							else if(fl1->type->kind == STRUCTURE)
@@ -880,7 +904,7 @@ void Exp(tree* root)
 			Exp(child2);
 			if(child->exp_type != child2->exp_type)
 			{
-				printf("Errot type 7 at Line %d: Type mismatched for operands.\n", child->line);
+				printf("Error type 7 at Line %d: Type mismatched for operands.\n", child->line);
 			}
 			else
 			{
