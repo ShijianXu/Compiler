@@ -1,6 +1,8 @@
 #ifndef INTERCODE_H_
 #define INTERCODE_H_
 
+#include "semantic.h"
+
 typedef struct Operand_* Operand;
 
 struct Operand_
@@ -28,5 +30,8 @@ struct InterCodes
 	struct InterCode code;
 	struct InterCodes *prev, *next;
 };
+
+
+void genInterCode(tree* root, FILE* fp);
 
 #endif

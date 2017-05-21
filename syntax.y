@@ -2,6 +2,7 @@
 	#include <stdio.h>
 	#include <stdlib.h>
 	#include "semantic.h"
+	#include "intercode.h"
 	int yylex();
 	int yyerror(char *msg);
 	extern int no_error;
@@ -143,6 +144,14 @@ int main(int argc, char** argv)
 	}
 	yyin = f;
 	yyrestart(f);
+
+	FILE* fp = fopen(argv[2],"w");
+	if(!fp)
+	{
+		perror(argv[2]);
+		return 1;
+	}
+
 	do{
 		//yydebug = 1;
 		yyparse();
@@ -151,6 +160,7 @@ int main(int argc, char** argv)
 	{
 		semantic_check(root);
 	//	treePrint(root,0);
+		genInterCode(root, fp);
 	}
 }
 int yyerror(char* msg)
