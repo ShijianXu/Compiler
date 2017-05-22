@@ -80,8 +80,8 @@ void VarDec(tree *root)
 				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
 				tree* child = root->first_child;
 				strcpy(para->name, child->value);
-				
 				strcpy(sym->name, child->value);
+
 				if(root->type->kind == STRUCTURE)
 					strcpy(sym->struct_name, root->struct_name);
 
@@ -102,6 +102,9 @@ void VarDec(tree *root)
 			{
 				tree* child = root->first_child;
 				strcpy(root->para->name, child->value);
+				strcpy(root->syms->name, child->value);
+				root->syms->lineno = child->line;
+				unsigned val = insert_symtable(root->syms);
 				//root->para->lineno = child->line;
 				return;
 			}
@@ -172,16 +175,27 @@ void VarDec(tree *root)
 			if(root->firstCallVarDec == 1)
 			{
 				struct Param* para = (struct Param*)malloc(sizeof(struct Param));
+				sympt sym = (sympt)malloc(sizeof(struct SymTableNode));
 				para->type = root->type;
+				sym->type = root->type;
 				if(root->type->kind == STRUCTURE)
+				{
 					strcpy(para->struct_name, root->struct_name);
+					strcpy(sym->struct_name, root->struct_name);
+				}
 				tree* child = root->first_child;
 				Type type = (Type)malloc(sizeof(struct Type_));
+				Type typeS = (Type)malloc(sizeof(struct Type_));
 				type->kind = ARRAY;
+				typeS->kind = ARRAY;
 				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				typeS->array.size = atoi(child->next_sibling->next_sibling->value);
 				type->array.elem = para->type;
+				typeS->array.elem = sym->type;
 				para->type = type;
+				sym->type = typeS;
 				child->para = para;
+				child->syms = sym;
 				child->firstCallVarDec = 0;
 				child->node_kind = root->node_kind;
 				VarDec(child);
@@ -191,11 +205,17 @@ void VarDec(tree *root)
 			{
 				tree* child = root->first_child;
 				Type type = (Type)malloc(sizeof(struct Type_));
+				Type typeS = (Type)malloc(sizeof(struct Type_));
 				type->kind = ARRAY;
+				typeS->kind = ARRAY;
 				type->array.size = atoi(child->next_sibling->next_sibling->value);
+				typeS->array.size = atoi(child->next_sibling->next_sibling->value);
 				type->array.elem = root->para->type;
+				typeS->array.elem = root->syms->type;
 				root->para->type = type;
+				root->syms->type = typeS;
 				child->para = root->para;
+				child->syms = root->syms;
 				child->firstCallVarDec = 0;
 				child->node_kind = root->node_kind;
 				VarDec(child);
@@ -1001,8 +1021,10 @@ void Exp(tree* root)
 				root->exp_type = _INT;
 			}
 		}
-		else if(strcmp(child->name, "NOT")==0)
+		else if(strcmp(child->name, "Exp")==0)
 		{
+			Exp(child);
+			root->exp_type = child->exp_type;
 		}
 		else if(strcmp(child->name, "PLUS")==0 ||
 				strcmp(child->name, "MINUS")==0 ||
@@ -1331,17 +1353,17 @@ void Stmt(tree* root)
 			case _INT:
 			{
 				if(root->return_type->kind != BASIC || (root->return_type->kind == BASIC && root->return_type->basic != INT_))
-					printf("Error type 8 at Line %d: Type mismatched for return.\n", child->line);
+					printf("Error type 8 at Line %d: Type mismatched for return, should be int.\n", child->line);
 				break;
 			}
 			case _FLOAT:
 			{
 				if(root->return_type->kind != BASIC || (root->return_type->kind == BASIC && root->return_type->basic != FLOAT_))
-					printf("Error type 8 at Line %d: Type mismatched for return.\n", child->line);
+					printf("Error type 8 at Line %d: Type mismatched for return, should be float.\n", child->line);
 				break;
 			}
 			default:
-				printf("Error type 8 at Line %d: Type mismatched for return.\n", child->line);
+				printf("Error type 8 at Line %d: Type mismatched for return, neither int nor float.\n", child->line);
 		}
 	}
 	else if(root->child_num == 5) 
@@ -1580,7 +1602,7 @@ void semantic_check(tree *root)
 	dfs(root, 0);
 //	check_functable();
 //printf("----------check symtable----------\n");
-//	check_symtable();
+	check_symtable();
 //printf("----------check structtable--------\n");
 //	check_structtable();
 //	printf("\n\n");
