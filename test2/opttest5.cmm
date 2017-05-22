@@ -1,0 +1,24 @@
+struct pos
+{
+};
+
+struct Temp1
+{
+	int i;
+	float j;
+	struct pos m[10][4][3];
+};
+
+struct Temp2
+{
+	int x;
+	float y;
+	struct pos n[10][4][3];
+};
+
+int main()
+{
+	struct Temp1 t1;
+	struct Temp2 t2;
+	t1 = t2;
+}

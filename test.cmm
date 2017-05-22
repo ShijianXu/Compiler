@@ -1,0 +1,9 @@
+int inc(int n)
+{
+	return 1;
+}
+
+int main()
+{
+	inc(3);
+}

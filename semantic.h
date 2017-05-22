@@ -48,7 +48,7 @@ typedef struct node
 	//fieldpt记录结构体的某一个域，之后插入结构体的filedList中
 	FieldList field;
 
-	enum EXP_TYPE exp_type;
+	enum EXP_TYPE exp_type; //args()调用exp()时用于记录相关信息返回
 
 	int array_dim;
 
@@ -179,6 +179,8 @@ void Stmt(tree* root);
 void Exp(tree* root);
 int Args(tree* root, int num);
 void CheckPoint();
+
+void insertReadWrite();
 
 sympt lookup_sym(tree* root);
 fdefpt lookup_func(tree* root);

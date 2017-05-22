@@ -7,7 +7,6 @@
 
 int scope = 0;
 
-
 Type Specifier(tree* root)
 {
 	Type type = (Type)malloc(sizeof(struct Type_));
@@ -304,6 +303,56 @@ void VarList(tree* root)
 		VarList(child);
 		return;
 	}
+}
+
+void insertReadWrite()
+{
+	fdefpt read=(fdefpt)malloc(sizeof(struct FuncDefTableNode));
+	fdefpt write=(fdefpt)malloc(sizeof(struct FuncDefTableNode));
+
+	strcpy(read->name, "read");
+	strcpy(write->name, "write");
+
+	read->return_type = INT_;
+	write->return_type = INT_;
+
+	read->para_num = 0;
+	read->para_list = NULL;
+
+	write->para_num = 1;
+
+	struct Param* para=(struct Param*)malloc(sizeof(struct Param));
+	Type type=(Type)malloc(sizeof(struct Type_));
+	type->kind = BASIC;
+	type->basic = INT_;
+	para->type = type;
+	para->next_para = NULL;
+	strcpy(para->name, "n");
+	write->para_list = para;
+
+	read->next = NULL;
+	write->next = NULL;
+
+	unsigned val1 = insert_funcDefTable(read);
+	unsigned val2 = insert_funcDefTable(write);
+
+//	printf("insert read return %d\ninsert write return %d\n", val1, val2);
+	sympt sym1=(sympt)malloc(sizeof(struct SymTableNode));
+	sympt sym2=(sympt)malloc(sizeof(struct SymTableNode));
+
+	strcpy(sym1->name,"read");
+	strcpy(sym2->name,"write");
+	
+	Type type1=(Type)malloc(sizeof(struct Type_));
+	Type type2=(Type)malloc(sizeof(struct Type_));
+	type1->kind = FUNCTION;
+	type2->kind = FUNCTION;
+	sym1->type = type1;
+	sym2->type = type2;
+
+	val1 = insert_symtable(sym1);
+	val2 = insert_symtable(sym2);
+//	printf("insert readsym return %d\ninsert writesym return%d\n", val1, val2);
 }
 
 void FunDec(tree *root)//root->type记录函数返回值
@@ -1084,7 +1133,7 @@ void Exp(tree* root)
 
 				if(args_num != func->para_num)
 				{
-					printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+					printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, args num not right.\n",child->line, func->name);
 				}
 				else
 				{
@@ -1097,13 +1146,13 @@ void Exp(tree* root)
 							case _INT:
 							{
 								if(para->type->kind!= BASIC || (para->type->kind == BASIC && para->type->basic != INT_))
-								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, args type not right.\n",child->line, func->name);
 								break;
 							}
 							case _FLOAT:
 							{
 								if(para->type->kind!= BASIC || (para->type->kind == BASIC && para->type->basic != FLOAT_))
-								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments args type not right.\n",child->line, func->name);
 								break;
 							}
 							case _ARRAY:
@@ -1116,7 +1165,7 @@ void Exp(tree* root)
 									type = type->array.elem;
 								}
 								if(para->type->kind != ARRAY)
-									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, array.\n",child->line, func->name);
 								else if(dim != at->array_dim)
 									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, the dim of array is wrong.\n",child->line, func->name);	
 								break;
@@ -1124,12 +1173,12 @@ void Exp(tree* root)
 							case _STRUCTURE:
 							{
 								if(para->type->kind != STRUCTURE)
-									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+									printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, structure.\n",child->line, func->name);
 								break;
 							}
 							case _NONE:
 							{
-								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments.\n",child->line, func->name);
+								printf("Error type 9 at Line %d: Function \"%s\" is not applicable for arguments, _NONE.\n",child->line, func->name);
 								break;
 							}
 							default:
@@ -1199,7 +1248,9 @@ int Args(tree* root, int num)
 
 	struct ArgsType* args = (struct ArgsType*)malloc(sizeof(struct ArgsType));
 
-	args->et = child->array_basic_type;
+	//
+	args->et = child->exp_type;
+	//args->et = child->array_basic_type;
 	if(args->et == _ARRAY)
 	{
 		args->array_dim = child->array_dim;
@@ -1492,7 +1543,8 @@ void dfs(tree* root, int space)
 void semantic_check(tree *root)
 {
 	init_hash_head();
-//	printf("checking\n");
+//	printf("checking\n");	
+	insertReadWrite();
 	dfs(root, 0);
 //	check_functable();
 //printf("----------check symtable----------\n");

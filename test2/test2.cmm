@@ -1,0 +1,9 @@
+int inc(int n)
+{
+}
+
+int main()
+{
+	int i = 0;
+	inc(i);
+}
