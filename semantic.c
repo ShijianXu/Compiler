@@ -821,6 +821,29 @@ void Exp(tree* root)
 	{
 		//NOT Exp
 		//MINUS Exp
+		tree *child = root->first_child;
+		if(strcmp(child->name, "MINUS")==0)
+		{
+			child = child->next_sibling;
+			Exp(child);
+			root->exp_type = child->exp_type;
+			root->isNum = child->isNum;
+			root->array_dim = child->array_dim;
+			root->array_basic_type = child->array_basic_type;
+			root->args = child->args;
+			root->return_type = child->return_type;
+		}
+		else if(strcmp(child->name, "NOT")==0)
+		{
+			child = child->next_sibling;
+			Exp(child);
+			root->exp_type = child->exp_type;
+			root->isNum = child->isNum;
+			root->array_dim = child->array_dim;
+			root->array_basic_type = child->array_basic_type;
+			root->args = child->args;
+			root->return_type = child->return_type;
+		}
 	}
 	else if(root->child_num == 3)
 	{
@@ -1286,9 +1309,9 @@ void Stmt(tree* root)
 {
 	if(root->child_num == 1)//CompSt
 	{
-	//	tree* child = root->first_child;
-	//	child->node_kind = root->node_kind;
-	//	CompSt(child);
+		tree* child = root->first_child;
+		child->node_kind = root->node_kind;
+		CompSt(child);
 	}
 	else if(root->child_num == 2) //Exp SEMI
 	{
@@ -1329,16 +1352,25 @@ void Stmt(tree* root)
 		if(strcmp(child->name,"IF")==0)
 		{
 			child = child->next_sibling->next_sibling;//Exp
+			child->node_kind = root->node_kind;
 			Exp(child);
 
 			child = child->next_sibling->next_sibling;
 			child->return_type = root->return_type;
+			child->node_kind = root->node_kind;
 			Stmt(child);
 		}
 		else
 		{
 			assert(strcmp(child->name,"WHILE")==0);
-			//TODO TODO
+			child = child->next_sibling->next_sibling;
+			child->node_kind = root->node_kind;
+			Exp(child);
+
+			child = child->next_sibling->next_sibling;
+			child->return_type = root->return_type;
+			child->node_kind = root->node_kind;
+			Stmt(child);
 		}
 	}
 	else if(root->child_num == 7)//IF LP Exp RP Stmt ELSE Stmt
