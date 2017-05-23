@@ -1023,6 +1023,7 @@ void Exp(tree* root)
 		}
 		else if(strcmp(child->name, "Exp")==0)
 		{
+			//LP Exp RP
 			Exp(child);
 			root->exp_type = child->exp_type;
 		}
@@ -1035,6 +1036,11 @@ void Exp(tree* root)
 			tree* child2 = child->next_sibling->next_sibling;
 			Exp(child);
 			Exp(child2);
+
+			if(child->array_basic_type!=_NONE)
+				child->exp_type = child->array_basic_type;
+			if(child2->array_basic_type !=_NONE)
+				child2->exp_type = child2->array_basic_type;
 
 			if((child->exp_type != _INT && child->exp_type != _FLOAT) || (child2->exp_type != _INT && child2->exp_type != _FLOAT) || child->exp_type != child2->exp_type)
 			{
@@ -1273,6 +1279,8 @@ void Exp(tree* root)
 				}
 				else
 				{
+					root->exp_type = child->array_basic_type;
+
 					child = child->next_sibling->next_sibling;
 					Exp(child);
 					if(child->exp_type != _INT)
@@ -1294,6 +1302,7 @@ int Args(tree* root, int num)
 	struct ArgsType* args = (struct ArgsType*)malloc(sizeof(struct ArgsType));
 
 	//
+	
 	args->et = child->exp_type;
 	//args->et = child->array_basic_type;
 	if(args->et == _ARRAY)
@@ -1602,7 +1611,7 @@ void semantic_check(tree *root)
 	dfs(root, 0);
 //	check_functable();
 //printf("----------check symtable----------\n");
-	check_symtable();
+//	check_symtable();
 //printf("----------check structtable--------\n");
 //	check_structtable();
 //	printf("\n\n");

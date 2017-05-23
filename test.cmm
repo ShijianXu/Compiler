@@ -1,14 +1,19 @@
-int inc(int n)
+int func1(int a[2])
 {
-	return 1;
+	return (1+2);
+}
+
+int func2(int n)
+{
+	return (1+2);
 }
 
 int main()
 {
-	while(1)
-	{
-		int a;
-		a = 2;
-		inc(2);
-	}
+	int array[2];
+	func1(array);
+	func1(array[0]);
+
+	func2(array);
+	func2(array[0]);
 }
