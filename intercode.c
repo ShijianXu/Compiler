@@ -147,6 +147,14 @@ InterCodes translate_Exp(tree* root, Operand place)
 	}
 }
 
+Operand get_relop(tree* root)
+{
+	Operand op = (Operand)malloc(sizeof(struct Operand_));
+	op->kind = RELOP_OP;
+	strcpy(op->relop_sym, root->value);
+	return op;
+}
+
 InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 {
 	tree* child = root->first_child;
@@ -162,12 +170,26 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 			//Exp RELOP Exp
 			Operand t1 = new_temp();
 			Operand t2 = new_temp();
+			Operand op = get_relop(child);
 
-			child = root->first_child;
+			child = root->first_child;//Exp1
 			InterCodes code1=translate_Exp(child, t1);
-			child = child->next_sibling->next_sibling;
+			
+			child = child->next_sibling->next_sibling;//Exp2
 			InterCodes code2=translate_Exp(child, t2);
+			
+			InterCodes code3=(InterCodes)malloc(sizeof(struct InterCodes_));
+			code3->icode.kind = IF_GOTO;
+			code3->icode.u.if_goto.op1 = t1;
+			code3->icode.u.if_goto.op = op;
+			code3->icode.u.if_goto.op2 = t2;
+			code3->icode.u.if_goto.lt = label_true;
 
+			InterCodes code4=(InterCodes)malloc(sizeof(struct InterCodes_));
+			code4->icode.kind = GOTO;
+			code4->icode.u.goto_.label = label_false;
+
+			//return(bindCode(bindCode(code1, code2),bindCode(code3,code4)));
 
 		}
 		else if(strcmp(child->name,"AND")==0)

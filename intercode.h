@@ -8,12 +8,14 @@ typedef struct InterCodes_* InterCodes;
 
 struct Operand_
 {
-	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, FUNCNAME, LABEL } kind;
+	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, FUNCNAME, LABEL, RELOP_OP } kind;
 	union {
 		int var_no;
 		int temp_no;
 		int label_no;
 		int value;
+		char relop_sym[4];
+
 		char name[40];
 		//...
 	} u;
@@ -45,6 +47,8 @@ struct Code
 		struct { Operand op; } funcdec;
 		struct { Operand op; } funcall;
 		struct { Operand label; } label_code;
+		struct { Operand op1, op, op2, lt; } if_goto;
+		struct { Operand label; } goto_;
 		//...
 	} u;
 };
