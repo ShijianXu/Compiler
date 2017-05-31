@@ -64,6 +64,9 @@ void translate_FunDec(tree* root)
 	strcpy(op->u.name, child->value);
 	
 	code->icode.u.funcdec.op = op;
+	code->prev = code;
+	code->next = code;
+
 	insert_code(code);
 
 	//VarList
@@ -109,6 +112,8 @@ InterCodes translate_Exp(tree* root, Operand place)
 			code->icode.kind = ASSIGN_C;
 			code->icode.u.assign.left = place;
 			code->icode.u.assign.right = cons;
+			code->prev = code;
+			code->next = code;
 
 			return code;
 		}
@@ -124,6 +129,12 @@ InterCodes translate_Exp(tree* root, Operand place)
 		//Exp ASSIGNOP Exp
 		if(strcmp(child->name, "ASSIGNOP")==0)
 		{
+			child=root->first_child;	//Exp1
+			//variable = lookup(exp)
+			Operand t1 = new_temp();
+			child = child->next_sibling->next_sibling;
+			InterCodes code1 = translate_Exp(child,t1);
+			//InterCodes code2
 		}
 		//Exp RELOP Exp
 		else if(strcmp(child->name, "RELOP")==0)
@@ -155,6 +166,16 @@ Operand get_relop(tree* root)
 	return op;
 }
 
+InterCodes bindCode(InterCodes code1, InterCodes code2)
+{
+	code1->prev = code2->next;
+	code2->prev = code1->next;
+	code1->next->next = code2;
+	code2->next = code1;
+
+	return code1;
+}
+
 InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 {
 	tree* child = root->first_child;
@@ -184,13 +205,16 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 			code3->icode.u.if_goto.op = op;
 			code3->icode.u.if_goto.op2 = t2;
 			code3->icode.u.if_goto.lt = label_true;
+			code3->prev = code3;
+			code3->next = code3;
 
 			InterCodes code4=(InterCodes)malloc(sizeof(struct InterCodes_));
 			code4->icode.kind = GOTO;
 			code4->icode.u.goto_.label = label_false;
+			code4->prev = code4;
+			code4->next = code4;
 
-			//return(bindCode(bindCode(code1, code2),bindCode(code3,code4)));
-
+			return bindCode(bindCode(code1, code2),bindCode(code3,code4));
 		}
 		else if(strcmp(child->name,"AND")==0)
 		{
@@ -217,6 +241,8 @@ InterCodes translate_Stmt(tree* root)
 	else if(root->child_num == 2)
 	{
 		//Exp SEMI
+		tree* child = root->first_child;	//Exp
+		return translate_Exp(child, NULL);
 	}
 	else if(root->child_num == 3)
 	{
@@ -234,19 +260,24 @@ InterCodes translate_Stmt(tree* root)
 			
 			child = child->next_sibling->next_sibling;//Exp
 			InterCodes code1=translate_Cond(child, label1, label2);
-			//...
+			
+			
 			child = child->next_sibling->next_sibling;//Stmt
 			InterCodes code2=translate_Stmt(child);
 
 			InterCodes labelcode1=(InterCodes)malloc(sizeof(struct InterCodes_));
 			labelcode1->icode.kind = LABEL_C;
 			labelcode1->icode.u.label_code.label = label1;
+			labelcode1->prev = labelcode1;
+			labelcode1->next = labelcode1;
 
 			InterCodes labelcode2=(InterCodes)malloc(sizeof(struct InterCodes_));
 			labelcode2->icode.kind = LABEL_C;
 			labelcode2->icode.u.label_code.label = label2;
+			labelcode2->prev = labelcode2;
+			labelcode2->next = labelcode2;
 
-			//TODO
+			return bindCode(bindCode(code1, labelcode1),bindCode(code2,labelcode2));
 		}
 		else
 		{
