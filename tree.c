@@ -74,6 +74,10 @@ void treePrint(tree *root, int space)
 			printf(" ");
 		if(strcmp(root->name, "ID")==0 || strcmp(root->name,"TYPE")==0)
 			printf("%s: %s\n", root->name, root->value);
+		else if(strcmp(root->name, "RELOP")==0)
+		{
+			printf("%s(%s)\n", root->name, root->value);
+		}
 		else if(strcmp(root->name, "INT")==0)
 		{
 			if(strlen(root->value)==1) 	//0-9,dec

@@ -1,3 +1,6 @@
 int main()
 {
+	int n;
+	if(2<3)
+		n = 1;
 }

@@ -36,7 +36,7 @@ while { yylval.nd = insert("WHILE", 0, "none", yylineno); return WHILE; }
 ";" { yylval.nd = insert("SEMI", 0, "none", yylineno); return SEMI; }
 "," { yylval.nd = insert("COMMA", 0, "none", yylineno); return COMMA; }
 "=" { yylval.nd = insert("ASSIGNOP", 0, "none", yylineno); return ASSIGNOP; }
-">"|"<"|">="|"<="|"=="|"!=" { yylval.nd = insert("RELOP", 0, "none",yylineno); return RELOP; }
+">"|"<"|">="|"<="|"=="|"!=" { yylval.nd = insert("RELOP", 0, yytext, yylineno); return RELOP; }
 "+" { yylval.nd = insert("PLUS", 0, "none", yylineno); return PLUS; }
 "-" { yylval.nd = insert("MINUS", 0, "none", yylineno); return MINUS; }
 "*" { yylval.nd = insert("STAR", 0, "none", yylineno); return STAR; }
