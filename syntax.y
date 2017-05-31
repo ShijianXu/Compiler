@@ -159,8 +159,8 @@ int main(int argc, char** argv)
 	if(no_error)
 	{
 		semantic_check(root);
-		treePrint(root,0);
-		//genInterCode(root, fp);
+		//treePrint(root,0);
+		genInterCode(root, fp);
 	}
 }
 int yyerror(char* msg)

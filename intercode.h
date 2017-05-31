@@ -5,6 +5,7 @@
 
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
+typedef struct SymVar_* SymVar;
 
 struct Operand_
 {
@@ -59,6 +60,15 @@ struct InterCodes_
 	struct InterCodes_ *prev, *next;
 };
 
+struct SymVar_
+{
+	char sym_name[40];
+	int var_no;
+	SymVar next;
+}
+
+SymVar SVhead;
+
 struct InterCodes_ *IChead;
 
 void init();
@@ -66,14 +76,16 @@ void dfs_(tree* root);
 void writeInterCode(FILE *fp);
 void genInterCode(tree* root, FILE *fp);
 void insert_code(InterCodes);
+int lookup_symvar(tree* root);
+void insert_symvar(SymVar pt);
 
 void translate_FunDec(tree* root);
 void translate_CompSt(tree* root);
-void translate_StmtList(tree* root);
+InterCodes translate_StmtList(tree* root);
 InterCodes translate_Stmt(tree* root);
 InterCodes translate_Exp(tree* root, Operand place);
 InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false);
-void translate_DefList(tree* child);
+InterCodes translate_DefList(tree* child);
 InterCodes bindCode(InterCodes code1, InterCodes code2);
 
 Operand new_label();
