@@ -65,14 +65,18 @@ void init();
 void dfs_(tree* root);
 void writeInterCode(FILE *fp);
 void genInterCode(tree* root, FILE *fp);
-
 void insert_code(InterCodes);
+
 void translate_FunDec(tree* root);
 void translate_CompSt(tree* root);
-void translate_StmtList(tree* child);
-InterCodes translate_Stmt(tree* child);
+void translate_StmtList(tree* root);
+InterCodes translate_Stmt(tree* root);
+InterCodes translate_Exp(tree* root, Operand place);
+InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false);
 void translate_DefList(tree* child);
+InterCodes bindCode(InterCodes code1, InterCodes code2);
 
 Operand new_label();
 Operand new_temp();
+Operand get_relop(tree* root);
 #endif
