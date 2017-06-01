@@ -20,6 +20,7 @@ struct Operand_
 		char name[40];
 		//...
 	} u;
+	Operand next;
 };
 
 struct Code
@@ -45,11 +46,15 @@ struct Code
 	union {
 		struct { Operand right, left; } assign;
 		struct { Operand result, op1, op2; } binop;
+		struct { Operand return_val; } return_code;
 		struct { Operand op; } funcdec;
-		struct { Operand op; } funcall;
+		struct { Operand re, fun; } funcall;
 		struct { Operand label; } label_code;
 		struct { Operand op1, op, op2, lt; } if_goto;
 		struct { Operand label; } goto_;
+		struct { Operand op; } read;
+		struct { Operand op; } write;
+		struct { Operand op; } arg;
 		//...
 	} u;
 };
@@ -65,7 +70,7 @@ struct SymVar_
 	char sym_name[40];
 	int var_no;
 	SymVar next;
-}
+};
 
 SymVar SVhead;
 
@@ -74,18 +79,20 @@ struct InterCodes_ *IChead;
 void init();
 void dfs_(tree* root);
 void writeInterCode(FILE *fp);
+void printOp(Operand op, FILE *fp);
 void genInterCode(tree* root, FILE *fp);
 void insert_code(InterCodes);
 int lookup_symvar(tree* root);
 void insert_symvar(SymVar pt);
 
 void translate_FunDec(tree* root);
-void translate_CompSt(tree* root);
+InterCodes translate_CompSt(tree* root);
 InterCodes translate_StmtList(tree* root);
 InterCodes translate_Stmt(tree* root);
 InterCodes translate_Exp(tree* root, Operand place);
 InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false);
-InterCodes translate_DefList(tree* child);
+InterCodes translate_DefList(tree* root);
+InterCodes translate_Args(tree* root, Operand arg_list);
 InterCodes bindCode(InterCodes code1, InterCodes code2);
 
 Operand new_label();
