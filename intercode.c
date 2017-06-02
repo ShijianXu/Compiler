@@ -1038,9 +1038,90 @@ InterCodes translate_Stmt(tree* root)
 	}
 }
 
+InterCodes translate_Dec(tree* root)
+{
+	if(root->child_num == 1)
+	{
+		//VarDec
+		return NULL;
+	}
+	else
+	{
+		//VarDec ASSIGNOP Exp
+		tree* child = root->first_child;
+		Operand op1 = translate_VarDec(child);
+		InterCodes code1=(InterCodes)malloc(sizeof(struct InterCodes_));
+		code1->next = code1;
+		code1->prev = code1;
+		code1->icode.kind = ASSIGN_C;
+		code1->icode.u.assign.left = op1;
+
+		Operand op2 = new_temp();
+		code1->icode.u.assign.right = op2;
+		child = child->next_sibling->next_sibling;
+		InterCodes code2=translate_Exp(child, op2);
+		return bindCode(code2,code1);
+	}
+}
+
+InterCodes translate_DecList(tree* root)
+{
+	if(root->child_num == 1)
+	{
+		//Dec
+		tree* child = root->first_child;
+		return translate_Dec(child);
+		//NULL
+	}
+	else
+	{
+		//Dec COMMA DecList
+		tree* child = root->first_child;
+		InterCodes code1 = translate_Dec(child);
+		child = child->next_sibling->next_sibling;
+		InterCodes code2 = translate_DecList(child);
+
+		if(code1!=NULL && code2!=NULL)
+			return bindCode(code1, code2);
+		else if(code1!=NULL)
+			return code1;
+		else if(code2!=NULL)
+			return code2;
+		else
+			return NULL;
+	}
+}
+
+InterCodes translate_Def(tree* root)
+{
+	//Specifier DecList SEMI
+	tree* child = root->first_child->next_sibling;
+	return translate_DecList(child);
+	//NULL
+}
+
 InterCodes translate_DefList(tree* root)
 {
-	return NULL;
+	if(root->child_num == 0)
+		return NULL;
+	else
+	{
+		//Def DefList
+		tree* child = root->first_child;
+		InterCodes code1 = translate_Def(child);
+		
+		child = child->next_sibling;
+		InterCodes code2 = translate_DefList(child);
+	
+		if(code1 != NULL && code2 != NULL)
+			return bindCode(code1, code2);
+		else if(code2 != NULL)
+			return code2;
+		else if(code1 != NULL)
+			return code1;
+		else
+			return NULL;
+	}
 }
 
 InterCodes translate_StmtList(tree* root)

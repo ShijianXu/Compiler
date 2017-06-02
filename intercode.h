@@ -101,7 +101,12 @@ InterCodes translate_StmtList(tree* root);
 InterCodes translate_Stmt(tree* root);
 InterCodes translate_Exp(tree* root, Operand place);
 InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false);
+
+InterCodes translate_Dec(tree* root);
+InterCodes translate_DecList(tree* root);
+InterCodes translate_Def(tree* root);
 InterCodes translate_DefList(tree* root);
+
 InterCodes translate_Args(tree* root, Operand *arg_list);
 InterCodes bindCode(InterCodes code1, InterCodes code2);
 
