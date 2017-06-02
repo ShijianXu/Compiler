@@ -5,9 +5,7 @@ int div(int m, int n)
 
 int main()
 {
-	int a=10, b;
-	b = read();
-	write(div(a,b));
-
+	int a[2][3][10];
+	a[1][1][1] = 2;
 	return 0;
 }

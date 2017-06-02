@@ -63,6 +63,11 @@ void printOp(Operand op, FILE *fp)
 			fprintf(fp, "%s", op->u.relop_sym);
 			break;
 		}
+		case SIZE:
+		{
+			fprintf(fp, "%d", op->u.value);
+			break;
+		}
 	}
 }
 
@@ -219,6 +224,13 @@ void writeInterCode(FILE *fp)
 			}
 			case DEC:
 			{
+				fprintf(fp, "DEC ");
+				Operand op = pt->icode.u.dec_.op1;
+				printOp(op,fp);
+				fprintf(fp," ");
+				op=pt->icode.u.dec_.op2;
+				printOp(op,fp);
+				fprintf(fp,"\n");
 				break;
 			}
 			case CALL:
@@ -253,7 +265,7 @@ Operand translate_VarDec(tree* root)
 {
 	//ID
 	if(root->child_num == 1)
-	{
+	{	
 		Operand var = new_var();
 		tree* child = root->first_child;
 		int var_no = lookup_symvar(child);
@@ -269,12 +281,64 @@ Operand translate_VarDec(tree* root)
 			sv->next = NULL;
 			insert_symvar(sv);
 		}
-		return var;
+
+		if(root->array_ic == 1)
+		{
+			tree* child = root->first_child;
+			sympt sym = lookup_sym(child);
+			assert(sym->type->kind == ARRAY);
+			
+			int dim = 1;
+			Type type = sym->type;
+			
+			ArrDim ad=(ArrDim)malloc(sizeof(struct ArrDim_));
+			ad->next = NULL;
+			ad->var_no = var->u.var_no;
+		
+			int arr_size[100];
+
+			int index = 0;
+			while(type->kind != BASIC)
+			{
+				arr_size[index] = type->array.size;
+				index++;
+				dim = dim*(type->array.size);
+				type = type->array.elem;
+			}
+			ad->dim = index;
+			
+			int i = 0;
+			dim = 1;
+			for(index = index-1; index>=0; index--,i++)
+			{
+				ad->dim_size[i]=4*dim;
+				dim = dim*arr_size[index];
+			}
+
+			insert_arrdim(ad);
+
+			Operand op=(Operand)malloc(sizeof(struct Operand_));
+			op->next = NULL;
+			op->kind = SIZE;
+
+			op->u.value = dim*4;
+
+			var->next = op;
+			return var;
+		}
+		else
+		{
+			return var;
+		}
 	}
 	else
 	{
 		//VarDec LB INT RB
-		//TODO
+		//TODO 数组定义,或数组(高维)做函数参数
+		tree* child = root->first_child;
+		child->array_ic = 1;
+
+		return translate_VarDec(child);
 	}
 }
 
@@ -382,6 +446,30 @@ int lookup_symvar(tree* root)
 	return -1;
 }
 
+ArrDim lookup_arrdim(int var_no)
+{
+	ArrDim pt = ADhead;
+	while(pt!=NULL)
+	{
+		if(pt->var_no == var_no)
+			return pt;
+		pt=pt->next;
+	}
+}
+
+void insert_arrdim(ArrDim pt)
+{
+	if(ADhead == NULL)
+	{
+		ADhead = pt;
+	}
+	else
+	{
+		pt->next = ADhead;
+		ADhead = pt;
+	}
+}
+
 void insert_symvar(SymVar pt)
 {
 	if(SVhead == NULL)
@@ -420,29 +508,50 @@ InterCodes translate_Exp(tree* root, Operand place)
 		}
 		else if(strcmp(child->name, "ID")==0)
 		{
-			printf("ID\n");
-			Operand var = new_var();
-			int var_no = lookup_symvar(child);
-			if(var_no != -1)
+			if(root->array_ic == 1)
 			{
-				var->u.var_no = var_no;
+				//数组名
+				//TODO
+				return NULL;
+				sympt sym = lookup_sym(child);
+				assert(sym->type->kind == ARRAY);
+				root->arr_sym = sym;
+
+				//Operand op=(Operand)
+
+				InterCodes code=(InterCodes)malloc(sizeof(struct InterCodes_));
+				code->next = code;
+				code->prev = code;
+				code->icode.kind = XANDY;//x=&y
+				code->icode.u.assign.left = place;
+				//code->icode.u.assign.right = 
 			}
 			else
 			{
-				SymVar sv=(SymVar)malloc(sizeof(struct SymVar_));
-				strcpy(sv->sym_name, child->value);
-				sv->var_no = var->u.var_no;
-				sv->next = NULL;
-				insert_symvar(sv);
+				printf("ID\n");
+				Operand var = new_var();
+				int var_no = lookup_symvar(child);
+				if(var_no != -1)
+				{
+					var->u.var_no = var_no;
+				}
+				else
+				{
+					SymVar sv=(SymVar)malloc(sizeof(struct SymVar_));
+					strcpy(sv->sym_name, child->value);
+					sv->var_no = var->u.var_no;
+					sv->next = NULL;
+					insert_symvar(sv);
+				}
+	
+				InterCodes code=(InterCodes)malloc(sizeof(struct InterCodes_));
+				code->icode.kind = ASSIGN_C;
+				code->icode.u.assign.left = place;
+				code->icode.u.assign.right = var;
+				code->prev = code;
+				code->next = code;
+				return code;
 			}
-
-			InterCodes code=(InterCodes)malloc(sizeof(struct InterCodes_));
-			code->icode.kind = ASSIGN_C;
-			code->icode.u.assign.left = place;
-			code->icode.u.assign.right = var;
-			code->prev = code;
-			code->next = code;
-			return code;
 		}
 	}
 	else if(root->child_num == 2)
@@ -529,7 +638,16 @@ InterCodes translate_Exp(tree* root, Operand place)
 		
 			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
 			code2->icode.kind = ASSIGN_C;
-			code2->icode.u.assign.left=code->icode.u.assign.right;
+			
+			child = root->first;
+			if(child->array_ic != 1)
+				code2->icode.u.assign.left=code->icode.u.assign.right;
+			else
+			{
+				Operand op = (Operand)malloc(sizeof(struct Operand_));
+				//TODO
+				code2->icdeo.u.assign.left=op;
+			}
 			code2->icode.u.assign.right = t1;
 			code2->prev = code2;
 			code2->next = code2;
@@ -647,7 +765,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 		else
 		{
 			//Exp DOT ID
-			//TODO
+			//TODO 结构体访问
 		}
 	}
 	else if(root->child_num == 4)
@@ -711,8 +829,33 @@ InterCodes translate_Exp(tree* root, Operand place)
 				return bindCode(bindCode(code1,code2),callcode);
 			}
 		}
-		//Exp LB Exp RB
-		//TODO
+		else
+		{
+			//Exp LB Exp RB
+			//TODO 数组访问
+			
+
+			//place := &(exp.add + ... + ... )
+			
+			/*
+			tree* child = root->first_child;
+			child->array_ic = 1;
+			return translate_Exp(child, place);
+			
+			child = child->next_sibling->next_sibling;
+			*/
+
+
+			/*
+			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
+			code2->prev = code2;
+			code2->next = code2;
+			code2->icode.kind = XANDY;
+			code2->icode.u.assign.left = place;
+			code2->icode.u.assign.right = (addr);
+			return code2;
+			 */
+		}
 	}
 }
 
@@ -1043,13 +1186,39 @@ InterCodes translate_Dec(tree* root)
 	if(root->child_num == 1)
 	{
 		//VarDec
-		return NULL;
+		//如果是不初始化的普通变量，直接return NULL;
+		//如果是数组定义，return code;
+		tree* child = root->first_child;
+		if(child->child_num == 1)
+			return NULL;
+
+		//数组定义
+		Operand op = translate_VarDec(child);
+		InterCodes code=(InterCodes)malloc(sizeof(struct InterCodes_));
+		code->next = code;
+		code->prev = code;
+		code->icode.kind = DEC;
+		code->icode.u.dec_.op1 = op;
+		code->icode.u.dec_.op2 = op->next;
+
+		//------
+		ArrDim ad = lookup_arrdim(op->u.var_no);
+		assert(ad!=NULL);
+		printf("the array size is %d\n", ad->dim);
+		int i = 0;
+		for(;i<ad->dim;i++)
+		{
+			printf("the dim_size is %d\n", ad->dim_size[i]);
+		}
+		//------
+		return code;
 	}
 	else
 	{
 		//VarDec ASSIGNOP Exp
 		tree* child = root->first_child;
 		Operand op1 = translate_VarDec(child);
+
 		InterCodes code1=(InterCodes)malloc(sizeof(struct InterCodes_));
 		code1->next = code1;
 		code1->prev = code1;

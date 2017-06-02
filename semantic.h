@@ -49,14 +49,16 @@ typedef struct node
 	FieldList field;
 
 	enum EXP_TYPE exp_type; //args()调用exp()时用于记录相关信息返回
-
 	int array_dim;
-
 	enum EXP_TYPE array_basic_type;
-
 	struct ArgsType* args;
 	int isNum;
 	Type return_type;
+
+	//---中间代码生成需要继承的一些属性---
+	int array_ic;
+	int array_dim_value;
+	sympt arr_sym;
 }tree;
 
 tree *insert(char *ch, int num, char *value, int lineno, ...);

@@ -6,6 +6,7 @@
 typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct SymVar_* SymVar;
+typedef struct ArrDim_* ArrDim;
 
 struct Args_return
 {
@@ -15,7 +16,7 @@ struct Args_return
 
 struct Operand_
 {
-	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, FUNCNAME, LABEL, RELOP_OP } kind;
+	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, FUNCNAME, LABEL, RELOP_OP, SIZE } kind;
 	union {
 		int var_no;
 		int temp_no;
@@ -24,7 +25,6 @@ struct Operand_
 		char relop_sym[4];
 
 		char name[40];
-		//...
 	} u;
 	Operand next;
 };
@@ -47,10 +47,13 @@ struct Code
 		ARG, 
 		PARAM, 
 		DEC,
-		CALL
+		CALL,
+		XANDY,  //X := &Y
+		XSTARY, //X := *Y
+		STARXY  //*X := Y
 	} kind;
 	union {
-		struct { Operand right, left; } assign;
+		struct {Operand right, left;} assign;//xandy,xstary,starxy
 		struct { Operand result, op1, op2; } binop;
 		struct { Operand return_val; } return_code;
 		struct { Operand op; } funcdec;
@@ -62,7 +65,7 @@ struct Code
 		struct { Operand op; } write;
 		struct { Operand op; } arg;
 		struct { Operand op; } param;
-		//...
+		struct { Operand op1, op2; } dec_;
 	} u;
 };
 
@@ -79,6 +82,15 @@ struct SymVar_
 	SymVar next;
 };
 
+struct ArrDim_
+{
+	int var_no;
+	int dim;
+	int dim_size[100];
+	ArrDim next;
+};
+
+ArrDim ADhead;
 SymVar SVhead;
 
 struct InterCodes_ *IChead;
@@ -91,6 +103,8 @@ void genInterCode(tree* root, FILE *fp);
 void insert_code(InterCodes);
 int lookup_symvar(tree* root);
 void insert_symvar(SymVar pt);
+ArrDim lookup_arrdim(int var_no);
+void insert_arrdim(ArrDim pt);
 
 void translate_FunDec(tree* root);
 Operand translate_VarDec(tree* root);

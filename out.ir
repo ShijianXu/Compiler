@@ -6,16 +6,6 @@ t3 := v2
 t1 := t2 / t3
 RETURN t1
 FUNCTION main :
-t4 := #10
-v5 := t4
-READ t6
-v6 := t6
-t5 := v6
-t9 := v5
-t10 := v6
-ARG t10
-ARG t9
-t8 := CALL div
-WRITE t8
-t11 := #0
-RETURN t11
+DEC v5 240
+t4 := #0
+RETURN t4
