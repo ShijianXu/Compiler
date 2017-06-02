@@ -211,6 +211,10 @@ void writeInterCode(FILE *fp)
 			}
 			case PARAM:
 			{
+				fprintf(fp,"PARAM ");
+				Operand op = pt->icode.u.param.op;
+				printOp(op,fp);
+				fprintf(fp,"\n");
 				break;
 			}
 			case DEC:
@@ -245,10 +249,73 @@ void insert_code(InterCodes code2)
 	code1->prev = pt;
 }
 
+Operand translate_VarDec(tree* root)
+{
+	//ID
+	if(root->child_num == 1)
+	{
+		Operand var = new_var();
+		tree* child = root->first_child;
+		int var_no = lookup_symvar(child);
+		if(var_no != -1)
+		{
+			var->u.var_no = var_no;
+		}
+		else
+		{
+			SymVar sv=(SymVar)malloc(sizeof(struct SymVar_));
+			strcpy(sv->sym_name, child->value);
+			sv->var_no = var->u.var_no;
+			sv->next = NULL;
+			insert_symvar(sv);
+		}
+		return var;
+	}
+	else
+	{
+		//VarDec LB INT RB
+		//TODO
+	}
+}
+
+InterCodes translate_ParamDec(tree* root)
+{
+	//Specifier VarDec
+
+	tree* child = root->first_child->next_sibling;
+	Operand op = translate_VarDec(child);
+	InterCodes code=(InterCodes)malloc(sizeof(struct InterCodes_));
+	code->icode.kind = PARAM;
+	code->prev = code;
+	code->next = code;
+	code->icode.u.param.op = op;
+
+	return code;
+}
+
+InterCodes translate_VarList(tree* root)
+{
+	//ParamDec COMMA VarList;
+	//ParamDec
+	if(root->child_num == 3)
+	{
+		tree* child = root->first_child;
+		InterCodes code1 = translate_ParamDec(child);
+		child = child->next_sibling->next_sibling;
+		InterCodes code2 = translate_VarList(child);
+		return bindCode(code1,code2);
+	}
+	else
+	{
+		tree* child = root->first_child;
+		return translate_ParamDec(child);
+	}
+}
+
 void translate_FunDec(tree* root)
 {
-	InterCodes code=(InterCodes)malloc(sizeof(struct InterCodes_));
-	code->icode.kind = FUNCTION_C;
+	InterCodes code1=(InterCodes)malloc(sizeof(struct InterCodes_));
+	code1->icode.kind = FUNCTION_C;
 	
 	Operand op = (Operand)malloc(sizeof(struct Operand_));
 	op->kind = FUNCNAME;
@@ -256,15 +323,20 @@ void translate_FunDec(tree* root)
 	tree* child = root->first_child;//ID LP VarList RP
 	strcpy(op->u.name, child->value);
 	
-	code->icode.u.funcdec.op = op;
-	code->prev = code;
-	code->next = code;
+	code1->icode.u.funcdec.op = op;
+	code1->prev = code1;
+	code1->next = code1;
 
-	insert_code(code);
+	child = child->next_sibling->next_sibling;
+	if(strcmp(child->name,"VarList")==0)
+	{
+		InterCodes code2 = translate_VarList(child);
 
-	//VarList
-	//translate_VarList();
-	//TODO
+		InterCodes code = bindCode(code1,code2);
+		insert_code(code);
+	}
+	else
+		insert_code(code1);
 }
 
 Operand new_label()
@@ -567,9 +639,13 @@ InterCodes translate_Exp(tree* root, Operand place)
 			}
 			return code;
 		}
-		else
+		else if(strcmp(child->name,"Exp")==0)
 		{
 			//LP Exp RP
+			return translate_Exp(child, place);
+		}
+		else
+		{
 			//Exp DOT ID
 			//TODO
 		}
@@ -580,9 +656,12 @@ InterCodes translate_Exp(tree* root, Operand place)
 		tree* child = root->first_child;
 		if(strcmp(child->name,"ID")==0)
 		{
-			Operand arg_list = NULL;
+			Operand arg_list=NULL;
+
 			child = child->next_sibling->next_sibling;
-			InterCodes code1 = translate_Args(child, arg_list);
+			InterCodes code1 = translate_Args(child, &arg_list);
+		
+			assert(arg_list != NULL);
 
 			child = root->first_child;
 			if(strcmp(child->value, "write")==0)
@@ -591,14 +670,17 @@ InterCodes translate_Exp(tree* root, Operand place)
 				code->prev = code;
 				code->next = code;
 				code->icode.kind = WRITE;
-				code->icode.u.write.op = arg_list;
 
+				assert(arg_list!=NULL);
+
+				code->icode.u.write.op = arg_list;
 				return bindCode(code1,code);
 			}
 			else
 			{
 				Operand pt = arg_list;
 				InterCodes code2;
+			
 				while(pt!=NULL)
 				{
 					InterCodes argcode=(InterCodes)malloc(sizeof(struct InterCodes_));
@@ -614,6 +696,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 					
 					pt=pt->next;
 				}
+
 				InterCodes callcode=(InterCodes)malloc(sizeof(struct InterCodes_));
 				callcode->prev = callcode;
 				callcode->next = callcode;
@@ -656,7 +739,7 @@ InterCodes bindCode(InterCodes code1, InterCodes code2)
 	return code1;
 }
 
-InterCodes translate_Args(tree* root, Operand arg_list)
+InterCodes translate_Args(tree* root, Operand *arg_list)
 {
 	//Exp
 	//Exp COMMA Args
@@ -665,14 +748,15 @@ InterCodes translate_Args(tree* root, Operand arg_list)
 		Operand t1 = new_temp();
 		tree* child = root->first_child;
 		InterCodes code1=translate_Exp(child, t1);
-		if(arg_list == NULL)
+	
+		if(*arg_list == NULL)
 		{
-			arg_list = t1;
+			*arg_list = t1;
 		}
 		else
 		{
-			t1->next = arg_list;
-			arg_list = t1;
+			t1->next = *arg_list;
+			*arg_list = t1;
 		}
 		return code1;
 	}
@@ -681,14 +765,15 @@ InterCodes translate_Args(tree* root, Operand arg_list)
 		Operand t1 = new_temp();
 		tree* child = root->first_child;
 		InterCodes code1 = translate_Exp(child, t1);
-		if(arg_list == NULL)
+		
+		if(*arg_list == NULL)
 		{
-			arg_list = t1;
+			*arg_list = t1;
 		}
 		else
 		{
-			t1->next = arg_list;
-			arg_list = t1;
+			t1->next = *arg_list;
+			*arg_list = t1;
 		}
 		child = child->next_sibling->next_sibling;
 		InterCodes code2 = translate_Args(child, arg_list);

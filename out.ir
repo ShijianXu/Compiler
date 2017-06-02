@@ -1,0 +1,22 @@
+FUNCTION div :
+PARAM v1
+PARAM v2
+t2 := v1
+t3 := v2
+t1 := t2 / t3
+RETURN t1
+FUNCTION main :
+READ t5
+v5 := t5
+t4 := v5
+READ t7
+v6 := t7
+t6 := v6
+t10 := v5
+t11 := v6
+ARG t11
+ARG t10
+t9 := CALL div
+WRITE t9
+t12 := #0
+RETURN t12

@@ -7,6 +7,12 @@ typedef struct Operand_* Operand;
 typedef struct InterCodes_* InterCodes;
 typedef struct SymVar_* SymVar;
 
+struct Args_return
+{
+	Operand pt;
+	InterCodes code;
+};
+
 struct Operand_
 {
 	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, FUNCNAME, LABEL, RELOP_OP } kind;
@@ -55,6 +61,7 @@ struct Code
 		struct { Operand op; } read;
 		struct { Operand op; } write;
 		struct { Operand op; } arg;
+		struct { Operand op; } param;
 		//...
 	} u;
 };
@@ -86,16 +93,20 @@ int lookup_symvar(tree* root);
 void insert_symvar(SymVar pt);
 
 void translate_FunDec(tree* root);
+Operand translate_VarDec(tree* root);
+InterCodes translate_ParamDec(tree* root);
+InterCodes translate_VarList(tree* root);
 InterCodes translate_CompSt(tree* root);
 InterCodes translate_StmtList(tree* root);
 InterCodes translate_Stmt(tree* root);
 InterCodes translate_Exp(tree* root, Operand place);
 InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false);
 InterCodes translate_DefList(tree* root);
-InterCodes translate_Args(tree* root, Operand arg_list);
+InterCodes translate_Args(tree* root, Operand *arg_list);
 InterCodes bindCode(InterCodes code1, InterCodes code2);
 
 Operand new_label();
 Operand new_temp();
+Operand new_var();
 Operand get_relop(tree* root);
 #endif
