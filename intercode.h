@@ -16,10 +16,10 @@ struct Args_return
 
 struct Operand_
 {
-	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, FUNCNAME, LABEL, RELOP_OP, SIZE } kind;
+	enum { VARIABLE, TEMP, CONSTANT, ADDRESS, REF, FUNCNAME, LABEL, RELOP_OP, SIZE } kind;
 	union {
-		int var_no;
-		int temp_no;
+		int var_no;		//addr
+		int temp_no;	//ref
 		int label_no;
 		int value;
 		char relop_sym[4];

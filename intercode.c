@@ -68,6 +68,16 @@ void printOp(Operand op, FILE *fp)
 			fprintf(fp, "%d", op->u.value);
 			break;
 		}
+		case ADDRESS:
+		{
+			fprintf(fp, "&v%d",op->u.var_no);
+			break;
+		}
+		case REF:
+		{
+			fprintf(fp, "*t%d", op->u.temp_no);
+			break;
+		}
 	}
 }
 
@@ -334,8 +344,9 @@ Operand translate_VarDec(tree* root)
 	else
 	{
 		//VarDec LB INT RB
-		//TODO 数组定义,或数组(高维)做函数参数
+		//数组定义,或数组(高维)做函数参数
 		tree* child = root->first_child;
+		
 		child->array_ic = 1;
 
 		return translate_VarDec(child);
@@ -508,7 +519,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 		}
 		else if(strcmp(child->name, "ID")==0)
 		{
-			if(root->array_ic == 1)
+		/*	if(root->array_ic == 1)
 			{
 				//数组名
 				//TODO
@@ -527,7 +538,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 				//code->icode.u.assign.right = 
 			}
 			else
-			{
+			{*/
 				printf("ID\n");
 				Operand var = new_var();
 				int var_no = lookup_symvar(child);
@@ -551,7 +562,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 				code->prev = code;
 				code->next = code;
 				return code;
-			}
+		//	}
 		}
 	}
 	else if(root->child_num == 2)
@@ -573,13 +584,25 @@ InterCodes translate_Exp(tree* root, Operand place)
 			op->next = NULL;
 			op->u.value = 0;
 			code2->icode.u.binop.op1 = op;
-			code2->icode.u.binop.op2 = t1;
+
+			if(child->array_ic != 1)
+				code2->icode.u.binop.op2 = t1;
+			else
+			{
+				Operand op2 = (Operand)malloc(sizeof(struct Operand_));
+				op2->next = NULL;
+				op2->kind = REF;
+				op2->u.temp_no = t1->u.temp_no;
+				code2->icode.u.binop.op2 = op2;
+			}
 			code2->icode.u.binop.result = place;
 			return bindCode(code1, code2);
 		}
 		else
 		{
 			//Exp-->NOT Exp
+			printf("NOT Exp\n");
+
 			Operand label1 = new_label();
 			Operand label2 = new_label();
 			InterCodes code0=(InterCodes)malloc(sizeof(struct InterCodes_));
@@ -630,6 +653,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 			printf("Exp ASSIGNOP Exp\n");
 			child=root->first_child;	//Exp1
 			assert(place!=NULL);
+			//place := int/ var/ &arr
 			InterCodes code = translate_Exp(child,place);
 
 			Operand t1 = new_temp();
@@ -639,21 +663,55 @@ InterCodes translate_Exp(tree* root, Operand place)
 			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
 			code2->icode.kind = ASSIGN_C;
 			
-			child = root->first;
+			child = root->first_child;
 			if(child->array_ic != 1)
+			{
 				code2->icode.u.assign.left=code->icode.u.assign.right;
+				
+				child = child->next_sibling->next_sibling;
+				if(child->array_ic != 1)
+					code2->icode.u.assign.right = t1;
+				else
+				{
+					Operand op = (Operand)malloc(sizeof(struct Operand_));
+					op->next = NULL;
+					op->kind = REF;
+					op->u.temp_no = t1->u.temp_no;
+					code2->icode.u.assign.right = op;
+				}
+				code2->prev = code2;
+				code2->next = code2;
+	
+				//code3 = code
+				return bindCode(code1,bindCode(code2, code));	
+			}
 			else
 			{
+				//赋值号左边为数组
 				Operand op = (Operand)malloc(sizeof(struct Operand_));
-				//TODO
-				code2->icdeo.u.assign.left=op;
-			}
-			code2->icode.u.assign.right = t1;
-			code2->prev = code2;
-			code2->next = code2;
+				op->next = NULL;
+				op->kind = REF;
+				op->u.temp_no = place->u.temp_no;
+				code2->icode.u.assign.left=op;
+			
+				child = child->next_sibling->next_sibling;
+				if(child->array_ic != 1)
+					code2->icode.u.assign.right = t1;
+				else
+				{
+					Operand op2 = (Operand)malloc(sizeof(struct Operand_));
+					op2->next = NULL;
+					op2->kind = REF;
+					op2->u.temp_no = t1->u.temp_no;
+					code2->icode.u.assign.right = op2;
+				}
 
-			//code3 = code
-			return bindCode(code1,bindCode(code2, code));
+				code2->prev = code2;
+				code2->next = code2;
+
+				//code3 = code
+				return bindCode(code,bindCode(code1, code2));
+			}
 		}
 		else if(strcmp(child->name, "PLUS")==0 || strcmp(child->name,"MINUS")==0 || strcmp(child->name, "STAR")==0 || strcmp(child->name, "DIV")==0 )
 		{
@@ -671,8 +729,30 @@ InterCodes translate_Exp(tree* root, Operand place)
 			InterCodes code3=(InterCodes)malloc(sizeof(struct InterCodes_));
 			code3->prev = code3;
 			code3->next = code3;
-			code3->icode.u.binop.op1 = t1;
-			code3->icode.u.binop.op2 = t2;
+
+			child = root->first_child;
+			if(child->array_ic != 1)
+				code3->icode.u.binop.op1 = t1;
+			else
+			{
+				Operand op1 = (Operand)malloc(sizeof(struct Operand_));
+				op1->next = NULL;
+				op1->kind = REF;
+				op1->u.temp_no = t1->u.temp_no;
+				code3->icode.u.binop.op1 = op1;
+			}
+			
+			child = child->next_sibling->next_sibling;
+			if(child->array_ic != 1)
+				code3->icode.u.binop.op2 = t2;
+			else
+			{
+				Operand op2 = (Operand)malloc(sizeof(struct Operand_));
+				op2->next = NULL;
+				op2->kind = REF;
+				op2->u.temp_no = t2->u.temp_no;
+				code3->icode.u.binop.op2 = op2;
+			}
 			code3->icode.u.binop.result = place;
 			child=root->first_child->next_sibling;
 			if(strcmp(child->name,"PLUS")==0)
@@ -833,28 +913,47 @@ InterCodes translate_Exp(tree* root, Operand place)
 		{
 			//Exp LB Exp RB
 			//TODO 数组访问
-			
-
-			//place := &(exp.add + ... + ... )
-			
-			/*
+			//只考虑一维数组
+			root->array_ic = 1;
 			tree* child = root->first_child;
-			child->array_ic = 1;
-			return translate_Exp(child, place);
-			
-			child = child->next_sibling->next_sibling;
-			*/
+			if(strcmp(child->first_child->name,"ID")==0)
+			{
+				Operand var = new_var();
+				int var_no = lookup_symvar(child->first_child);
+				assert(var_no != -1);
+				var->u.var_no = var_no;
+				// t1 = i
+				child=root->first_child->next_sibling->next_sibling;
+				Operand t1 = new_temp();
+				InterCodes code1 = translate_Exp(child, t1);
+				// t2 = t1 * #4
+				InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
+				code2->prev = code2;
+				code2->next = code2;
+				code2->icode.kind = MUL_C;
+				Operand op=(Operand)malloc(sizeof(struct Operand_));
+				op->kind = CONSTANT;
+				op->u.value = 4;
+				op->next = NULL;
+				Operand t2 = new_temp();
+				code2->icode.u.binop.result = t2;
+				code2->icode.u.binop.op1 = t1;
+				code2->icode.u.binop.op2 = op;
+				// place = &var + t2
+				InterCodes code3=(InterCodes)malloc(sizeof(struct InterCodes_));
+				code3->prev = code3;
+				code3->next = code3;
+				code3->icode.kind = ADD_C;
+				code3->icode.u.binop.result = place;
+				Operand var_ = (Operand)malloc(sizeof(struct Operand_));
+				var_->next = NULL;
+				var_->kind = ADDRESS;
+				var_->u.var_no = var->u.var_no;
+				code3->icode.u.binop.op1 = var_;
+				code3->icode.u.binop.op2 = t2;
 
-
-			/*
-			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
-			code2->prev = code2;
-			code2->next = code2;
-			code2->icode.kind = XANDY;
-			code2->icode.u.assign.left = place;
-			code2->icode.u.assign.right = (addr);
-			return code2;
-			 */
+				return bindCode(bindCode(code1,code2),code3);
+			}
 		}
 	}
 }
@@ -891,7 +990,16 @@ InterCodes translate_Args(tree* root, Operand *arg_list)
 		Operand t1 = new_temp();
 		tree* child = root->first_child;
 		InterCodes code1=translate_Exp(child, t1);
-	
+		
+		if(child->array_ic == 1)
+		{
+			Operand op2 = (Operand)malloc(sizeof(struct Operand_));
+			op2->next = NULL;
+			op2->kind = REF;
+			op2->u.temp_no = t1->u.temp_no;
+			t1 = op2;
+		}
+		
 		if(*arg_list == NULL)
 		{
 			*arg_list = t1;
@@ -908,7 +1016,14 @@ InterCodes translate_Args(tree* root, Operand *arg_list)
 		Operand t1 = new_temp();
 		tree* child = root->first_child;
 		InterCodes code1 = translate_Exp(child, t1);
-		
+		if(child->array_ic == 1)
+		{
+			Operand op2 = (Operand)malloc(sizeof(struct Operand_));
+			op2->next = NULL;
+			op2->kind = REF;
+			op2->u.temp_no = t1->u.temp_no;
+			t1 = op2;
+		}
 		if(*arg_list == NULL)
 		{
 			*arg_list = t1;
@@ -930,11 +1045,14 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 	if(strcmp(child->name, "NOT")==0)
 	{
 		child=child->next_sibling;
+		printf("Cond NOT\n");
 		return translate_Cond(child, label_false, label_true);
 	}
 	else
 	{
 		child = child->next_sibling;
+		if(root->child_num == 3)
+		{
 		if(strcmp(child->name,"RELOP")==0)
 		{
 			printf("Exp RELOP Exp\n");
@@ -1003,6 +1121,39 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 		{
 			//other case
 			//???
+			printf("Cond-->Exp\n");
+			Operand t1 = new_temp();
+			InterCodes code1 = translate_Exp(root,t1);
+			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
+			code2->prev = code2;
+			code2->next = code2;
+			code2->icode.kind = IF_GOTO;
+			code2->icode.u.if_goto.op1 = t1;
+			code2->icode.u.if_goto.lt = label_true;
+
+			Operand relop=(Operand)malloc(sizeof(struct Operand_));
+			relop->kind = RELOP_OP;
+			relop->next = NULL;
+			strcpy(relop->u.relop_sym,"!=");
+			code2->icode.u.if_goto.op = relop;
+
+			Operand op2 = (Operand)malloc(sizeof(struct Operand_));
+			op2->kind = CONSTANT;
+			op2->next = NULL;
+			op2->u.value = 0;
+			code2->icode.u.if_goto.op2 = op2;
+
+			InterCodes labelcode=(InterCodes)malloc(sizeof(struct InterCodes_));
+			labelcode->prev = labelcode;
+			labelcode->next = labelcode;
+			labelcode->icode.kind = GOTO;
+			labelcode->icode.u.goto_.label = label_true;
+
+			return bindCode(bindCode(code1,code2), labelcode);
+		}
+		}
+		else //root->child_num != 3
+		{
 			Operand t1 = new_temp();
 			InterCodes code1 = translate_Exp(root,t1);
 			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));

@@ -5,7 +5,12 @@ int div(int m, int n)
 
 int main()
 {
-	int a[2][3][10];
-	a[1][1][1] = 2;
+	int a[10],x,y,b;
+
+	a[1] = read();
+	a[0] = read();
+
+	write(a[0]);
+
 	return 0;
 }
