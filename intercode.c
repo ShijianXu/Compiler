@@ -25,8 +25,7 @@ void genInterCode(tree* root, FILE *fp)
 	init();
 	dfs_(root);
 	writeInterCode(fp);
-//	fprintf(fp, "Hello, world! %d\n", 2);
-//	fclose(fp);
+	fclose(fp);
 }
 
 void printOp(Operand op, FILE *fp)
@@ -275,7 +274,13 @@ Operand translate_VarDec(tree* root)
 {
 	//ID
 	if(root->child_num == 1)
-	{	
+	{
+		sympt sym = lookup_sym(root->first_child);
+		if(sym->type->kind == STRUCTURE)
+		{
+			printf("Cannot translate: Code contains variables or parameters of structure type.\n");
+			exit(0);
+		}
 		Operand var = new_var();
 		tree* child = root->first_child;
 		int var_no = lookup_symvar(child);
@@ -502,7 +507,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 		tree* child = root->first_child;
 		if(strcmp(child->name, "INT")==0)
 		{
-			printf("INT\n");
+		//	printf("INT\n");
 			Operand cons=(Operand)malloc(sizeof(struct Operand_));
 			cons->kind = CONSTANT;
 			cons->next = NULL;
@@ -539,7 +544,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 			}
 			else
 			{*/
-				printf("ID\n");
+			//	printf("ID\n");
 				Operand var = new_var();
 				int var_no = lookup_symvar(child);
 				if(var_no != -1)
@@ -601,7 +606,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 		else
 		{
 			//Exp-->NOT Exp
-			printf("NOT Exp\n");
+		//	printf("NOT Exp\n");
 
 			Operand label1 = new_label();
 			Operand label2 = new_label();
@@ -650,7 +655,7 @@ InterCodes translate_Exp(tree* root, Operand place)
 		//Exp ASSIGNOP Exp
 		if(strcmp(child->name, "ASSIGNOP")==0)
 		{
-			printf("Exp ASSIGNOP Exp\n");
+		//	printf("Exp ASSIGNOP Exp\n");
 			child=root->first_child;	//Exp1
 			assert(place!=NULL);
 			//place := int/ var/ &arr
@@ -954,6 +959,11 @@ InterCodes translate_Exp(tree* root, Operand place)
 
 				return bindCode(bindCode(code1,code2),code3);
 			}
+			else
+			{
+				printf("Cannot translate: Code contains variables of multi-dimensional array type or parameters of array type.\n");
+				exit(0);
+			}
 		}
 	}
 }
@@ -1045,7 +1055,7 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 	if(strcmp(child->name, "NOT")==0)
 	{
 		child=child->next_sibling;
-		printf("Cond NOT\n");
+	//	printf("Cond NOT\n");
 		return translate_Cond(child, label_false, label_true);
 	}
 	else
@@ -1055,12 +1065,12 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 		{
 		if(strcmp(child->name,"RELOP")==0)
 		{
-			printf("Exp RELOP Exp\n");
+		//	printf("Exp RELOP Exp\n");
 			//Exp RELOP Exp
 			Operand t1 = new_temp();
 			Operand t2 = new_temp();
 			Operand op = get_relop(child);
-			printf("relop_sym: %s\n", op->u.name);		
+		//	printf("relop_sym: %s\n", op->u.name);		
 	
 			child = root->first_child;//Exp1
 			InterCodes code1=translate_Exp(child, t1);
@@ -1121,7 +1131,7 @@ InterCodes translate_Cond(tree* root, Operand label_true, Operand label_false)
 		{
 			//other case
 			//???
-			printf("Cond-->Exp\n");
+		//	printf("Cond-->Exp\n");
 			Operand t1 = new_temp();
 			InterCodes code1 = translate_Exp(root,t1);
 			InterCodes code2=(InterCodes)malloc(sizeof(struct InterCodes_));
@@ -1198,13 +1208,13 @@ InterCodes translate_Stmt(tree* root)
 	{
 		//Exp SEMI
 		Operand t1 = new_temp();
-		printf("Exp SEMI\n");
+	//	printf("Exp SEMI\n");
 		tree* child = root->first_child;	//Exp
 		return translate_Exp(child, t1);
 	}
 	else if(root->child_num == 3)
 	{
-		printf("RETURN Exp SEMI\n");
+	//	printf("RETURN Exp SEMI\n");
 		//RETURN Exp SEMI
 		Operand t1 = new_temp();
 		tree* child = root->first_child->next_sibling;//Exp
@@ -1224,7 +1234,7 @@ InterCodes translate_Stmt(tree* root)
 		tree* child = root->first_child;
 		if(strcmp(child->name, "IF")==0)
 		{
-			printf("IF LP Exp RP Stmt\n");
+		//	printf("IF LP Exp RP Stmt\n");
 
 			Operand label1 = new_label();
 			Operand label2 = new_label();
@@ -1254,7 +1264,7 @@ InterCodes translate_Stmt(tree* root)
 		else
 		{
 			//WHILE LP Exp RP Stmt
-			printf("WHILE LP Exp RP Stmt\n");
+		//	printf("WHILE LP Exp RP Stmt\n");
 			Operand label1 = new_label();
 			Operand label2 = new_label();
 			Operand label3 = new_label();
@@ -1355,11 +1365,11 @@ InterCodes translate_Dec(tree* root)
 		//------
 		ArrDim ad = lookup_arrdim(op->u.var_no);
 		assert(ad!=NULL);
-		printf("the array size is %d\n", ad->dim);
+	//	printf("the array size is %d\n", ad->dim);
 		int i = 0;
 		for(;i<ad->dim;i++)
 		{
-			printf("the dim_size is %d\n", ad->dim_size[i]);
+		//	printf("the dim_size is %d\n", ad->dim_size[i]);
 		}
 		//------
 		return code;
@@ -1466,7 +1476,6 @@ InterCodes translate_StmtList(tree* root)
 
 InterCodes translate_CompSt(tree* root)
 {
-	printf("CompSt\n");
 	tree* child = root->first_child->next_sibling;//DefList
 	InterCodes code1 = translate_DefList(child);
 
