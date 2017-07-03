@@ -99,7 +99,7 @@ void init();
 void dfs_(tree* root);
 void writeInterCode(FILE *fp);
 void printOp(Operand op, FILE *fp);
-void genInterCode(tree* root, FILE *fp);
+void genInterCode(tree* root, FILE* fp_ir, FILE *fp);
 void insert_code(InterCodes);
 int lookup_symvar(tree* root);
 void insert_symvar(SymVar pt);

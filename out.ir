@@ -1,25 +1,11 @@
-FUNCTION div :
-PARAM v1
-PARAM v2
-t2 := v1
-t3 := v2
-t1 := t2 / t3
-RETURN t1
 FUNCTION main :
-DEC v5 40
-t5 := #1
-t6 := t5 * #4
-t4 := &v5 + t6
-READ t7
-*t4 := t7
-t9 := #0
-t10 := t9 * #4
-t8 := &v5 + t10
-READ t11
-*t8 := t11
-t14 := #0
-t15 := t14 * #4
-t13 := &v5 + t15
-WRITE *t13
-t16 := #0
-RETURN t16
+READ t1
+v1 := t1
+READ t2
+v2 := t2
+t4 := v1
+t5 := v2
+t3 := t4 + t5
+v3 := t3
+t7 := v3
+WRITE t7

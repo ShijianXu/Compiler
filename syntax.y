@@ -145,6 +145,13 @@ int main(int argc, char** argv)
 	yyin = f;
 	yyrestart(f);
 
+	FILE* fp_ir = fopen("out.ir", "w");
+	if(!fp_ir)
+	{
+		perror("out.ir");
+		return 1;
+	}
+
 	FILE* fp = fopen(argv[2],"w");
 	if(!fp)
 	{
@@ -160,7 +167,7 @@ int main(int argc, char** argv)
 	{
 		semantic_check(root);
 		//treePrint(root,0);
-		genInterCode(root, fp);
+		genInterCode(root, fp_ir, fp);
 	}
 }
 int yyerror(char* msg)

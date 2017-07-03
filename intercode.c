@@ -20,11 +20,15 @@ void init()
 	SVhead = NULL;
 }
 
-void genInterCode(tree* root, FILE *fp)
+void genInterCode(tree* root, FILE* fp_ir, FILE *fp)
 {
 	init();
 	dfs_(root);
-	writeInterCode(fp);
+	writeInterCode(fp_ir);
+
+	//mips(fp);
+	fprintf(fp, "gen mips codes here.\n");
+	fclose(fp_ir);
 	fclose(fp);
 }
 
