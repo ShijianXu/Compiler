@@ -26,8 +26,7 @@ void genInterCode(tree* root, FILE* fp_ir, FILE *fp)
 	dfs_(root);
 	writeInterCode(fp_ir);
 
-	//mips(fp);
-	fprintf(fp, "gen mips codes here.\n");
+	genMIPScode(fp);
 	fclose(fp_ir);
 	fclose(fp);
 }

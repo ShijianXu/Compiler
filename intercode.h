@@ -95,6 +95,8 @@ SymVar SVhead;
 
 struct InterCodes_ *IChead;
 
+void genMIPScode(FILE* fp);
+
 void init();
 void dfs_(tree* root);
 void writeInterCode(FILE *fp);
