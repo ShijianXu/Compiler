@@ -31,17 +31,24 @@ void genInterCode(tree* root, FILE* fp_ir, FILE *fp)
 	fclose(fp);
 }
 
+static int ebp = 0;
+Operand funcop = NULL;
+
 void printOp(Operand op, FILE *fp)
 {
 	switch(op->kind)
 	{
 		case VARIABLE:
 		{
+			op->offset = ebp;
+			ebp -= 4;
 			fprintf(fp, "v%d", op->u.var_no);
 			break;
 		}
 		case TEMP:
 		{
+			op->offset = ebp;
+			ebp -= 4;
 			fprintf(fp, "t%d", op->u.temp_no);
 			break;
 		}
@@ -52,6 +59,7 @@ void printOp(Operand op, FILE *fp)
 		}
 		case FUNCNAME:
 		{
+			ebp = 0;
 			fprintf(fp, "%s", op->u.name);
 			break;
 		}
@@ -72,11 +80,15 @@ void printOp(Operand op, FILE *fp)
 		}
 		case ADDRESS:
 		{
+			op->offset = ebp;
+			ebp -= 4;
 			fprintf(fp, "&v%d",op->u.var_no);
 			break;
 		}
 		case REF:
 		{
+			op->offset = ebp;
+			ebp -= 4;
 			fprintf(fp, "*t%d", op->u.temp_no);
 			break;
 		}
@@ -95,6 +107,14 @@ void writeInterCode(FILE *fp)
 			{
 				fprintf(fp, "FUNCTION ");
 				Operand op = pt->icode.u.funcdec.op;
+				if(funcop == NULL)
+					funcop = op;
+				else
+				{
+					funcop->funsize = ebp;
+					funcop = op;
+				}
+
 				printOp(op,fp);
 				fprintf(fp, " :\n");
 				break;
@@ -257,6 +277,10 @@ void writeInterCode(FILE *fp)
 			}
 		}
 		pt=pt->next;
+	}
+	if(strcmp(funcop->u.name, "main")==0)
+	{
+		funcop->funsize = ebp;
 	}
 }
 

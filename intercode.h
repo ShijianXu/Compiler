@@ -26,6 +26,11 @@ struct Operand_
 
 		char name[40];
 	} u;
+
+
+	int offset;
+	int funsize;
+
 	Operand next;
 };
 

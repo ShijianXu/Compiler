@@ -1,7 +1,9 @@
 int main()
 {
 	int a,b,c;
-	a = 2;
-	b = 3;
-	c =2+3;
+	a = read();
+	b = read();
+	c = a+3;
+	write(c);
+	return 0;
 }
