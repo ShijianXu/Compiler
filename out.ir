@@ -1,16 +1,67 @@
-FUNCTION main :
-READ t2
-v1 := t2
-t1 := v1
-READ t4
-v2 := t4
+FUNCTION time :
+PARAM v1
+PARAM v2
+t2 := v1
 t3 := v2
-t7 := v1
-t8 := #3
-t6 := t7 + t8
-v3 := t6
-t5 := v3
-t10 := v3
-WRITE t10
-t11 := #0
-RETURN t11
+t1 := t2 * t3
+RETURN t1
+FUNCTION main :
+DEC v5 16
+DEC v6 16
+t5 := #0
+v7 := t5
+t4 := v7
+LABEL label1 :
+t6 := v7
+t7 := #4
+IF t6 < t7 GOTO label2
+GOTO label3
+LABEL label2 :
+t9 := v7
+t10 := t9 * #4
+t8 := &v5 + t10
+READ t11
+*t8 := t11
+t13 := v7
+t14 := t13 * #4
+t12 := &v6 + t14
+READ t15
+*t12 := t15
+t18 := v7
+t19 := #1
+t17 := t18 + t19
+v7 := t17
+t16 := v7
+GOTO label1
+LABEL label3 :
+t21 := #0
+v7 := t21
+t20 := v7
+LABEL label4 :
+t22 := v7
+t23 := #4
+IF t22 < t23 GOTO label5
+GOTO label6
+LABEL label5 :
+t27 := v7
+t28 := t27 * #4
+t26 := &v5 + t28
+t30 := v7
+t31 := t30 * #4
+t29 := &v6 + t31
+ARG *t29
+ARG *t26
+t25 := CALL time
+v17 := t25
+t24 := v17
+t33 := v17
+WRITE t33
+t36 := v7
+t37 := #1
+t35 := t36 + t37
+v7 := t35
+t34 := v7
+GOTO label4
+LABEL label6 :
+t38 := #0
+RETURN t38

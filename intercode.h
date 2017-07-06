@@ -8,6 +8,18 @@ typedef struct InterCodes_* InterCodes;
 typedef struct SymVar_* SymVar;
 typedef struct ArrDim_* ArrDim;
 
+struct Var_
+{
+	int v;
+	int t;
+	int no;
+	int offset;
+};
+
+struct Var_ varList[2000];
+int search_var(Operand op);
+int search_temp(Operand op);
+
 struct Args_return
 {
 	Operand pt;
@@ -27,9 +39,9 @@ struct Operand_
 		char name[40];
 	} u;
 
-
 	int offset;
 	int funsize;
+	int arg_num;
 
 	Operand next;
 };
@@ -53,9 +65,9 @@ struct Code
 		PARAM, 
 		DEC,
 		CALL,
-		XANDY,  //X := &Y
-		XSTARY, //X := *Y
-		STARXY  //*X := Y
+		//XANDY,  //X := &Y
+		//XSTARY, //X := *Y
+		//STARXY  //*X := Y
 	} kind;
 	union {
 		struct {Operand right, left;} assign;//xandy,xstary,starxy

@@ -1,9 +1,26 @@
+int time(int x, int y)
+{
+	return x*y;
+}
+
+
 int main()
 {
-	int a,b,c;
-	a = read();
-	b = read();
-	c = a+3;
-	write(c);
+	int a[4], b[4], i, ans;
+	i = 0;
+	while(i < 4)
+	{
+		a[i] = read();
+		b[i] = read();
+		i = i + 1;
+	}
+	
+	i = 0;
+	while(i < 4)
+	{
+		ans = time(a[i], b[i]);
+		write(ans);
+		i = i + 1;
+	}
 	return 0;
 }

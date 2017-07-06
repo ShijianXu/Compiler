@@ -32,7 +32,33 @@ void genInterCode(tree* root, FILE* fp_ir, FILE *fp)
 }
 
 static int ebp = 0;
-Operand funcop = NULL;
+static int varcount = 0;
+static Operand funcop = NULL;
+
+int search_var(Operand op)
+{
+	int i = 0;
+	for(;i<varcount;i++)
+	{
+		if(varList[i].v == 1 && varList[i].no == op->u.var_no)
+			return i;
+	}
+	return -1;
+}
+
+int search_temp(Operand op)
+{
+	int i = 0;
+	for(;i<varcount; i++)
+	{
+		if(varList[i].t == 1 && varList[i].no == op->u.temp_no)
+			return i;
+	}
+	return -1;
+}
+
+static int arrayDec = 0;
+static int arraySize = 0;
 
 void printOp(Operand op, FILE *fp)
 {
@@ -40,15 +66,51 @@ void printOp(Operand op, FILE *fp)
 	{
 		case VARIABLE:
 		{
-			op->offset = ebp;
-			ebp -= 4;
+			if(arrayDec == 1)
+			{
+				varList[varcount].v = 1;
+				varList[varcount].no = op->u.var_no;
+				ebp -= arraySize;
+				varList[varcount].offset = ebp;
+				varcount++;
+				ebp -= 4;
+				fprintf(fp, "v%d", op->u.var_no);
+				break;
+			}
+			
+			int ans = search_var(op);
+			if(ans!=-1)
+			{
+				op->offset = varList[ans].offset; 
+			}
+			else
+			{
+				varList[varcount].v = 1;
+				varList[varcount].no = op->u.var_no;
+				varList[varcount].offset = ebp;
+				op->offset = varList[varcount].offset;
+				varcount++;
+				ebp -= 4;
+			}
 			fprintf(fp, "v%d", op->u.var_no);
 			break;
 		}
 		case TEMP:
 		{
-			op->offset = ebp;
-			ebp -= 4;
+			int ans = search_temp(op);
+			if(ans!=-1)
+			{
+				op->offset = varList[ans].offset;
+			}
+			else
+			{
+				varList[varcount].t = 1;
+				varList[varcount].no = op->u.temp_no;
+				varList[varcount].offset = ebp;
+				op->offset = varList[varcount].offset;
+				varcount++;
+				ebp-=4;
+			}
 			fprintf(fp, "t%d", op->u.temp_no);
 			break;
 		}
@@ -59,7 +121,6 @@ void printOp(Operand op, FILE *fp)
 		}
 		case FUNCNAME:
 		{
-			ebp = 0;
 			fprintf(fp, "%s", op->u.name);
 			break;
 		}
@@ -80,15 +141,39 @@ void printOp(Operand op, FILE *fp)
 		}
 		case ADDRESS:
 		{
-			op->offset = ebp;
-			ebp -= 4;
+			int ans = search_var(op);
+			if(ans!=-1)
+			{
+				op->offset = varList[ans].offset; 
+			}
+			else
+			{
+				varList[varcount].v = 1;
+				varList[varcount].no = op->u.var_no;
+				varList[varcount].offset = ebp;
+				op->offset = varList[varcount].offset;
+				varcount++;
+				ebp -= 4;
+			}
 			fprintf(fp, "&v%d",op->u.var_no);
 			break;
 		}
 		case REF:
 		{
-			op->offset = ebp;
-			ebp -= 4;
+			int ans = search_temp(op);
+			if(ans!=-1)
+			{
+				op->offset = varList[ans].offset;
+			}
+			else
+			{
+				varList[varcount].t = 1;
+				varList[varcount].no = op->u.temp_no;
+				varList[varcount].offset = ebp;
+				op->offset = varList[varcount].offset;
+				varcount++;
+				ebp-=4;
+			}	
 			fprintf(fp, "*t%d", op->u.temp_no);
 			break;
 		}
@@ -116,6 +201,7 @@ void writeInterCode(FILE *fp)
 				}
 
 				printOp(op,fp);
+				ebp = 0;
 				fprintf(fp, " :\n");
 				break;
 			}
@@ -257,11 +343,17 @@ void writeInterCode(FILE *fp)
 			case DEC:
 			{
 				fprintf(fp, "DEC ");
-				Operand op = pt->icode.u.dec_.op1;
-				printOp(op,fp);
+				Operand op1 = pt->icode.u.dec_.op1;
+				Operand op2 =pt->icode.u.dec_.op2;
+		//----------数组定义---------------
+				arrayDec = 1;
+				arraySize = op2->u.value;
+				printOp(op1,fp);
+				arrayDec = 0;
+				arraySize = 0;
+		//---------------------------------
 				fprintf(fp," ");
-				op=pt->icode.u.dec_.op2;
-				printOp(op,fp);
+				printOp(op2,fp);
 				fprintf(fp,"\n");
 				break;
 			}
@@ -278,10 +370,8 @@ void writeInterCode(FILE *fp)
 		}
 		pt=pt->next;
 	}
-	if(strcmp(funcop->u.name, "main")==0)
-	{
-		funcop->funsize = ebp;
-	}
+	
+	funcop->funsize = ebp;
 }
 
 void insert_code(InterCodes code2)
